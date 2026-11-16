@@ -311,7 +311,7 @@ const state = {
   denominations: store.get('denominations', {500:0,200:0,100:0,50:0,20:0,10:0,5:0,2:0,1:0}),
   opening: store.get('opening', {cash: 0, bank: 0}),
   bankOpenings: store.get('bankOpenings', {}), 
-  sheetsUrl: 'https://script.google.com/macros/s/AKfycbyHb6yv4sh85g-CoGyzHgZPg8YOyyvxAKUY-J4BgD6u2MXkxLKaT9ES5AhNvMREkIgH/exec',
+  sheetsUrl: 'https://script.google.com/macros/s/AKfycbzYNCe2MxHt6fDAM1r1Eg5gQzKENCfZvHlhgzyfS6Xdzm9OjnaqGy0S_0AddZ0Q6m38/exec',
   currentPage: 'dashboard',
   role: 'admin' 
 };
@@ -1717,4 +1717,243 @@ window.exportDailyReportCSV = function() {
       });
   }
   bankAccs.forEach(acc => {
-      if (
+      if (accBalances[acc] === undefined) accBalances[acc] = 0;
+  });
+
+  state.bankBook.forEach(r => {
+    if(new Date(r.date) <= target){
+      const acc = r.accName || 'Mani SBI';
+      if(accBalances[acc] === undefined) accBalances[acc] = 0;
+      accBalances[acc] += (Number(r.recAmt)||0) - (Number(r.payAmt)||0);
+    }
+  });
+
+  const getRouteTotal = (routeData) => {
+    return routeData.filter(r => {
+      if(!r.date) return false;
+      const d = parseDateSafe(r.date);
+      return d && sameDay(d, target);
+    }).reduce((a, r) => a + (Number(r.amount)||0), 0);
+  };
+  const r1Total = getRouteTotal(state.route01);
+  const r2Total = getRouteTotal(state.route02);
+
+  const denomTotal = Object.entries(state.denominations).reduce((a,[v,c]) => a + Number(v)*Number(c), 0);
+
+  let csv = '\uFEFF';
+  csv += `TRY Accounting - Daily Report (${date})\n\n`;
+  
+  csv += `Summary,Amount\n`;
+  csv += `Cash Closing Balance,${fmtN(closeCash)}\n`;
+  csv += `Bank Closing Balance,${fmtN(closeBank)}\n`;
+  
+  csv += `\nBank Account Breakdown,Balance\n`;
+  Object.entries(accBalances).forEach(([acc, bal]) => {
+    csv += `"${acc}",${fmtN(bal)}\n`;
+  });
+
+  csv += `\nRoute Collections,Total\n`;
+  csv += `"Route 01",${fmtN(r1Total)}\n`;
+  csv += `"Route 02",${fmtN(r2Total)}\n`;
+
+  csv += `\nDenomination Tally,Count,Amount\n`;
+  [500,200,100,50,20,10,5,2,1].forEach(v => {
+    const c = state.denominations[v] || 0;
+    csv += `"₹${v}",${c},${fmtN(v*c)}\n`;
+  });
+  csv += `"Total",,${fmtN(denomTotal)}\n`;
+
+  csv += `\nTransactions\n`;
+  csv += `Date,Type,Particular,Received,Payment,Ledger,Mode,Account,Balance\n`;
+  
+  const txs = [];
+  state.cashBook.forEach(r => { if(sameDay(new Date(r.date), target)) txs.push({...r, acc:'Cash'}); });
+  state.bankBook.forEach(r => { if(sameDay(new Date(r.date), target)) txs.push({...r, acc: r.accName||'Bank'}); });
+  txs.sort((a,b)=>new Date(a.date)-new Date(b.date));
+  
+  txs.forEach(r => {
+    const d = new Date(r.date).toLocaleDateString('en-IN');
+    const rec = r.recAmt ? fmtN(r.recAmt) : '0';
+    const pay = r.payAmt ? fmtN(r.payAmt) : '0';
+    csv += `"${d}","${r.type}","${(r.particular||'').replace(/"/g, '""')}",${rec},${pay},"${r.ledger||''}","${r.mode}","${r.acc}",${fmtN(r.balance)}\n`;
+  });
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.setAttribute("href", url);
+  link.setAttribute("download", `Daily_Report_${date}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  toast('✅ Excel (CSV) Downloaded!');
+};
+
+/* ===================== INLINE DENOMINATION LOGIC ===================== */
+window.onTxAmountChange = function() {
+    const mode = $('#txMode').value;
+    const amount = Number($('#txAmount').value) || 0;
+    const section = $('#cashDenomSection');
+    
+    if (mode === 'Cash' && amount > 0) {
+        section.classList.remove('hidden');
+        window.autoCalcDenom(amount);
+    } else if (mode === 'Cash') {
+        section.classList.remove('hidden');
+    } else {
+        section.classList.add('hidden');
+    }
+};
+
+window.autoCalcDenom = function(amount) {
+    let remaining = amount;
+    const vals = [500, 200, 100, 50, 20, 10, 5, 2, 1];
+    vals.forEach(v => {
+        const count = Math.floor(remaining / v);
+        $(`#denom_${v}`).value = count > 0 ? count : '';
+        remaining %= v;
+    });
+    window.updateInlineDenomTotal();
+};
+
+window.updateInlineDenomTotal = function() {
+    let total = 0;
+    const vals = [500, 200, 100, 50, 20, 10, 5, 2, 1];
+    vals.forEach(v => {
+        const count = Number($(`#denom_${v}`).value) || 0;
+        const amt = v * count;
+        total += amt;
+        const amtEl = $(`#denomAmt_${v}`);
+        if(amtEl) amtEl.textContent = fmt(amt);
+    });
+    const totEl = $('#inlineDenomTotal');
+    const target = Number($('#txAmount').value) || 0;
+    if(totEl) {
+        totEl.textContent = fmt(total);
+        totEl.style.color = Math.abs(total - target) < 0.01 ? 'var(--green)' : 'var(--red)';
+    }
+};
+
+/* ===================== ROUTE DENOMINATION MODAL ===================== */
+function openRouteDenomModal(routeName, cashEntries, cashTotal){
+  window.__routeName = routeName;
+  window.__routeCashTotal = cashTotal;
+  window.__routeCashEntries = cashEntries;
+  
+  openModal(`
+    <h3>Cash Denomination Verification</h3>
+    <p class="sub">${routeName} — Target: <strong style="color:var(--primary)">${fmt(cashTotal)}</strong> (${cashEntries.length} cash entries)</p>
+    <div id="denomRows">
+      ${[500,200,100,50,20,10,5,2,1].map(v=>`
+        <div class="denom-row">
+          <div class="denom-val">₹${v}</div>
+          <input type="number" min="0" data-denom="${v}" placeholder="0" oninput="updateRouteDenom()">
+          <div class="denom-amt" data-amt="${v}">₹0.00</div>
+        </div>
+      `).join('')}
+    </div>
+    <div class="denom-total"><span>Entered Total:</span><span id="denomTotal">₹0.00</span></div>
+    <div id="denomMatchMsg" class="denom-status" style="background:var(--orange-bg);color:var(--orange)">⚠️ Enter denominations totaling ${fmt(cashTotal)}</div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-green hidden" id="denomSubmitBtn">✓ Verify & Post to Cash Book</button>
+    </div>
+  `);
+  
+  setTimeout(() => {
+    $('#denomSubmitBtn').onclick = () => postRouteCollection(routeName);
+  }, 50);
+}
+
+function updateRouteDenom(){
+  let total = 0;
+  document.querySelectorAll('[data-denom]').forEach(inp => {
+    const v = Number(inp.dataset.denom);
+    const c = Number(inp.value) || 0;
+    const amt = v * c;
+    total += amt;
+    const amtEl = document.querySelector(`[data-amt="${v}"]`);
+    if(amtEl) amtEl.textContent = fmt(amt);
+  });
+  const totEl = document.getElementById('denomTotal');
+  if(totEl) totEl.textContent = fmt(total);
+  
+  const target = window.__routeCashTotal;
+  const match = Math.abs(total - target) < 0.01;
+  const msgEl = document.getElementById('denomMatchMsg');
+  const btn = document.getElementById('denomSubmitBtn');
+  
+  if(match){
+    if(msgEl){
+      msgEl.textContent = '✓ Matched! Ready to post';
+      msgEl.style.background = 'var(--green-bg)';
+      msgEl.style.color = 'var(--green)';
+    }
+    if(btn) btn.classList.remove('hidden');
+  } else {
+    if(total === 0){
+      if(msgEl){
+        msgEl.textContent = `⚠️ Enter denominations totaling ${fmt(target)}`;
+        msgEl.style.background = 'var(--orange-bg)';
+        msgEl.style.color = 'var(--orange)';
+      }
+    } else {
+      const diff = Math.abs(target - total);
+      if(msgEl){
+        msgEl.textContent = `❌ Mismatch — Difference: ${fmt(diff)}`;
+        msgEl.style.background = 'var(--red-bg)';
+        msgEl.style.color = 'var(--red)';
+      }
+    }
+    if(btn) btn.classList.add('hidden');
+  }
+}
+
+function postRouteCollection(routeName){
+  const denoms = {};
+  document.querySelectorAll('[data-denom]').forEach(inp => {
+    denoms[inp.dataset.denom] = Number(inp.value) || 0;
+  });
+  
+  const cashEntries = window.__routeCashEntries || [];
+  const d = new Date();
+  
+  cashEntries.forEach(r => {
+    const amt = Number(r.amount);
+    if(amt <= 0) return;
+    const lastBal = state.cashBook.length ? state.cashBook[state.cashBook.length - 1].balance : state.opening.cash;
+    state.cashBook.push({
+      date: d.toISOString(), 
+      type: 'Receipt', 
+      particular: r.name || 'Route Collection',
+      recAmt: amt, 
+      payAmt: 0, 
+      ledger: 'Due Amount', 
+      mode: 'Cash', 
+      balance: lastBal + amt
+    });
+  });
+  
+  for(const v of [500,200,100,50,20,10,5,2,1]){
+    state.denominations[v] = (state.denominations[v] || 0) + (Number(denoms[v]) || 0);
+  }
+  
+  save();
+  closeModal();
+  toast(`✅ ${cashEntries.length} route collections posted to Cash Book!`);
+  render();
+}
+
+/* ===================== INIT ===================== */
+function init(){
+  if(!localStorage.getItem('try_initialized_v15')){
+    if(state.opening.cash === 0) state.opening.cash = 783.00;
+    if(state.opening.bank === 0) state.opening.bank = 151853.27;
+    save();
+    localStorage.setItem('try_initialized_v15', 'true');
+  }
+  render();
+}
+</script>
+</body>
+</html>
