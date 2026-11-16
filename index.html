@@ -311,7 +311,6 @@ const state = {
   denominations: store.get('denominations', {500:0,200:0,100:0,50:0,20:0,10:0,5:0,2:0,1:0}),
   opening: store.get('opening', {cash: 0, bank: 0}),
   bankOpenings: store.get('bankOpenings', {}), 
-  // Your Google Apps Script URL is hardcoded here
   sheetsUrl: 'https://script.google.com/macros/s/AKfycbwgpt7xl6-zqeBQt4GEJkDACm-tvpmehRuLKN_oifkF_64nOTKqpOsy43hmP5S_iee1/exec',
   currentPage: 'dashboard',
   role: 'admin' 
@@ -1643,14 +1642,14 @@ function attachHandlers(){
   }
 }
 
-/* ===================== GOOGLE SHEETS SYNC ===================== */
+/* ===================== GOOGLE SHEETS SYNC (FIXED CORS) ===================== */
 window.syncToGoogleSheets = async function() {
   if (!state.sheetsUrl) {
     toast('❌ Google Sheets URL not configured.', 'error');
     return;
   }
   
-  toast('⏳ Syncing data to Google Sheets...', 'success');
+  toast('⏳ Sending data to Google Sheets...', 'success');
   
   const payload = {
     cashBook: state.cashBook,
@@ -1662,19 +1661,23 @@ window.syncToGoogleSheets = async function() {
   };
 
   try {
+    // Using URLSearchParams avoids CORS preflight (OPTIONS request) which GAS doesn't support
+    const formData = new URLSearchParams();
+    formData.append('payload', JSON.stringify(payload));
+
     const response = await fetch(state.sheetsUrl, {
       method: 'POST',
-      mode: 'no-cors', // Important for GAS Web App
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      body: formData,
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
     });
-    
-    setTimeout(() => {
-      toast('✅ Data Sent to Google Sheets! Check your sheet.', 'success');
-    }, 1500);
+
+    // If it reaches here without CORS error, it's usually successful
+    toast('✅ Data Sent to Google Sheets! Check your sheet.', 'success');
   } catch (e) {
     console.error(e);
-    toast('❌ Sync failed: ' + e.message, 'error');
+    toast('❌ Sync failed. Check your internet or GAS deployment.', 'error');
   }
 };
 
@@ -1921,17 +1924,17 @@ function postRouteCollection(routeName){
   
   save();
   closeModal();
-  toast(`✅ ${cashEntries.length} route collections posted to Cash Book!`);
+  toast(`✅ ${cashRoutes.length} route collections posted to Cash Book!`); // Fixed variable name
   render();
 }
 
 /* ===================== INIT ===================== */
 function init(){
-  if(!localStorage.getItem('try_initialized_v12')){
+  if(!localStorage.getItem('try_initialized_v13')){
     if(state.opening.cash === 0) state.opening.cash = 783.00;
     if(state.opening.bank === 0) state.opening.bank = 151853.27;
     save();
-    localStorage.setItem('try_initialized_v12', 'true');
+    localStorage.setItem('try_initialized_v13', 'true');
   }
   render();
 }
