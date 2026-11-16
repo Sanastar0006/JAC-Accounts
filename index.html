@@ -1,2761 +1,1940 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>JAC • Luxury Staff Tracking & Live Location</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        body {
-            background: #f0f4f9;
-            min-height: 100vh;
-            padding: 15px;
-        }
-
-        .app-container {
-            max-width: 480px;
-            width: 100%;
-            background: white;
-            border-radius: 30px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-            margin: 0 auto;
-            position: relative;
-            min-height: 600px;
-        }
-
-        /* Header */
-        .app-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 15px;
-            padding-bottom: 12px;
-            border-bottom: 2px solid #f0f4f9;
-        }
-
-        .app-title {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .app-title i {
-            font-size: 22px;
-            color: #2563eb;
-            background: #e8edff;
-            padding: 8px 10px;
-            border-radius: 12px;
-        }
-
-        .app-title h1 {
-            font-size: 18px;
-            color: #1a2a3a;
-            font-weight: 700;
-        }
-
-        .app-title span {
-            font-size: 10px;
-            color: #6b7a8a;
-            font-weight: 400;
-            display: block;
-        }
-
-        /* Dashboard Menu */
-        .dashboard-menu {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr 1fr;
-            gap: 8px;
-            margin-bottom: 15px;
-        }
-
-        .dashboard-card {
-            background: #f8faff;
-            border-radius: 14px;
-            padding: 12px 6px;
-            text-align: center;
-            border: 2px solid #eef3fc;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        .dashboard-card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 25px rgba(37, 99, 235, 0.15);
-        }
-
-        .dashboard-card.active {
-            border-color: #2563eb;
-            background: #e8edff;
-        }
-
-        .dashboard-card i {
-            font-size: 22px;
-            color: #2563eb;
-            margin-bottom: 4px;
-            display: block;
-        }
-
-        .dashboard-card .label {
-            font-size: 9px;
-            font-weight: 600;
-            color: #2d3a4a;
-        }
-
-        .dashboard-card .badge {
-            background: #2563eb;
-            color: white;
-            font-size: 8px;
-            padding: 1px 6px;
-            border-radius: 20px;
-            display: inline-block;
-            margin-top: 2px;
-        }
-
-        .dashboard-card .badge.success {
-            background: #22c55e;
-        }
-
-        .dashboard-card .badge.warning {
-            background: #f59e0b;
-        }
-
-        /* Page Navigation */
-        .page {
-            display: none;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .page.active {
-            display: block;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Form Styles */
-        .form-group {
-            margin-bottom: 12px;
-        }
-
-        .form-group label {
-            display: block;
-            font-size: 12px;
-            font-weight: 600;
-            color: #2d3a4a;
-            margin-bottom: 3px;
-        }
-
-        .form-group label i {
-            color: #2563eb;
-            margin-right: 6px;
-            width: 16px;
-        }
-
-        .form-group input,
-        .form-group select {
-            width: 100%;
-            padding: 10px 12px;
-            border: 2px solid #e2e8f0;
-            border-radius: 10px;
-            font-size: 13px;
-            transition: 0.3s;
-            background: white;
-            color: #1a2a3a;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus {
-            border-color: #2563eb;
-            outline: none;
-            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
-        }
-
-        .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-
-        /* Buttons */
-        .btn {
-            padding: 10px 16px;
-            border: none;
-            border-radius: 10px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            width: 100%;
-        }
-
-        .btn-primary {
-            background: #2563eb;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #1d4ed8;
-            transform: translateY(-2px);
-        }
-
-        .btn-success {
-            background: #16a34a;
-            color: white;
-        }
-
-        .btn-success:hover {
-            background: #15803d;
-            transform: translateY(-2px);
-        }
-
-        .btn-danger {
-            background: #dc2626;
-            color: white;
-        }
-
-        .btn-danger:hover {
-            background: #b91c1c;
-        }
-
-        .btn-secondary {
-            background: #f0f4f9;
-            color: #2d3a4a;
-        }
-
-        .btn-secondary:hover {
-            background: #e2e8f0;
-        }
-
-        .btn-warning {
-            background: #f59e0b;
-            color: white;
-        }
-
-        .btn-warning:hover {
-            background: #d97706;
-        }
-
-        .btn-sm {
-            padding: 6px 10px;
-            font-size: 11px;
-            width: auto;
-        }
-
-        .btn-xs {
-            padding: 4px 8px;
-            font-size: 10px;
-            width: auto;
-            border-radius: 6px;
-        }
-
-        /* Table Styles */
-        .table-container {
-            overflow-x: auto;
-            margin-top: 10px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 11px;
-        }
-
-        table th {
-            background: #f0f4f9;
-            color: #2d3a4a;
-            padding: 8px 6px;
-            text-align: left;
-            font-weight: 600;
-            border-bottom: 2px solid #e2e8f0;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-            white-space: nowrap;
-        }
-
-        table td {
-            padding: 8px 6px;
-            border-bottom: 1px solid #eef3fc;
-            vertical-align: middle;
-        }
-
-        table tr:hover {
-            background: #f8faff;
-        }
-
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            display: inline-block;
-            margin-right: 4px;
-        }
-
-        .status-dot.tracking {
-            background: #22c55e;
-            animation: pulse 1.5s infinite;
-        }
-
-        .status-dot.not-tracking {
-            background: #f59e0b;
-        }
-
-        .status-dot.inactive {
-            background: #94a3b8;
-        }
-
-        .action-btns {
-            display: flex;
-            gap: 4px;
-            flex-wrap: wrap;
-        }
-
-        .action-btns .btn-xs {
-            padding: 3px 6px;
-            font-size: 9px;
-        }
-
-        /* Map */
-        #map {
-            width: 100%;
-            height: 250px;
-            border-radius: 14px;
-            margin-bottom: 10px;
-            border: 2px solid #e8edf5;
-        }
-
-        /* Profile Card */
-        .profile-card {
-            background: #f8faff;
-            border-radius: 14px;
-            padding: 15px;
-            border: 2px solid #e8edf5;
-            margin-bottom: 10px;
-        }
-
-        .profile-header {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 10px;
-        }
-
-        .profile-avatar {
-            width: 48px;
-            height: 48px;
-            background: linear-gradient(135deg, #2563eb, #7c3aed);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            color: white;
-            font-weight: 700;
-        }
-
-        .profile-name {
-            font-size: 15px;
-            font-weight: 700;
-            color: #1a2a3a;
-        }
-
-        .profile-role {
-            font-size: 11px;
-            color: #6b7a8a;
-            background: #e8edff;
-            padding: 2px 10px;
-            border-radius: 20px;
-            display: inline-block;
-            margin-top: 2px;
-        }
-
-        .profile-detail {
-            display: flex;
-            justify-content: space-between;
-            padding: 5px 0;
-            border-bottom: 1px solid #e8edf5;
-            font-size: 11px;
-        }
-
-        .profile-detail:last-child {
-            border-bottom: none;
-        }
-
-        .profile-detail .label {
-            color: #6b7a8a;
-            font-weight: 500;
-        }
-
-        .profile-detail .value {
-            color: #1a2a3a;
-            font-weight: 600;
-        }
-
-        /* Tracking Section */
-        .tracking-section {
-            background: #f0f7ff;
-            border-radius: 14px;
-            padding: 12px;
-            border: 2px solid #dbeafe;
-            margin-bottom: 10px;
-        }
-
-        .tracking-status {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .tracking-info {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .pulse-dot {
-            width: 10px;
-            height: 10px;
-            background: #22c55e;
-            border-radius: 50%;
-            animation: pulse 1.5s infinite;
-        }
-
-        @keyframes pulse {
-            0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
-            70% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
-            100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
-        }
-
-        .pulse-dot.inactive {
-            background: #94a3b8;
-            animation: none;
-        }
-
-        .tracking-btn {
-            padding: 6px 14px;
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: 0.3s;
-            font-size: 11px;
-        }
-
-        .tracking-btn.active {
-            background: #dc2626;
-            color: white;
-        }
-
-        .tracking-btn.active:hover {
-            background: #b91c1c;
-        }
-
-        .tracking-btn.inactive {
-            background: #22c55e;
-            color: white;
-        }
-
-        .tracking-btn.inactive:hover {
-            background: #16a34a;
-        }
-
-        /* Top Menu */
-        .top-menu {
-            display: flex;
-            gap: 3px;
-            align-items: center;
-        }
-
-        .menu-btn {
-            background: none;
-            border: none;
-            padding: 4px 6px;
-            border-radius: 6px;
-            font-size: 10px;
-            font-weight: 500;
-            color: #2d3a4a;
-            cursor: pointer;
-            transition: 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 3px;
-        }
-
-        .menu-btn:hover {
-            background: #f0f4f9;
-        }
-
-        .menu-btn i {
-            font-size: 12px;
-        }
-
-        /* Location Permission */
-        .location-permission {
-            background: #fff3cd;
-            border-radius: 14px;
-            padding: 12px;
-            border: 2px solid #ffc107;
-            margin-bottom: 10px;
-        }
-
-        .location-permission .icon {
-            font-size: 18px;
-            color: #ffc107;
-        }
-
-        /* Location Log */
-        .location-log {
-            max-height: 90px;
-            overflow-y: auto;
-            background: #f8faff;
-            border-radius: 10px;
-            padding: 6px;
-            border: 1px solid #eef3fc;
-            margin-top: 6px;
-        }
-
-        .log-entry {
-            display: flex;
-            justify-content: space-between;
-            padding: 3px 0;
-            border-bottom: 1px solid #eef3fc;
-            font-size: 10px;
-        }
-
-        .log-entry:last-child {
-            border-bottom: none;
-        }
-
-        /* Notification */
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: #22c55e;
-            color: white;
-            padding: 10px 16px;
-            border-radius: 12px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            font-weight: 500;
-            display: none;
-            z-index: 1000;
-            max-width: 260px;
-            font-size: 12px;
-        }
-
-        .notification.error {
-            background: #dc2626;
-        }
-
-        .notification.show {
-            display: block;
-            animation: slideIn 0.3s ease;
-        }
-
-        @keyframes slideIn {
-            from { transform: translateX(100px); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-
-        /* Route Info */
-        .route-info {
-            background: #f8faff;
-            border-radius: 10px;
-            padding: 8px;
-            border: 1px solid #eef3fc;
-            margin-bottom: 8px;
-        }
-
-        .route-info-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 2px 0;
-            font-size: 11px;
-            border-bottom: 1px solid #eef3fc;
-        }
-
-        .route-info-item:last-child {
-            border-bottom: none;
-        }
-
-        .route-info-item .label {
-            color: #6b7a8a;
-        }
-
-        .route-info-item .value {
-            color: #1a2a3a;
-            font-weight: 600;
-        }
-
-        /* Stats */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 5px;
-            margin-bottom: 8px;
-        }
-
-        .stat-card {
-            background: #f8faff;
-            border-radius: 10px;
-            padding: 6px;
-            text-align: center;
-            border: 1px solid #eef3fc;
-        }
-
-        .stat-card .number {
-            font-size: 14px;
-            font-weight: 700;
-            color: #0b2b4a;
-        }
-
-        .stat-card .label {
-            font-size: 7px;
-            font-weight: 600;
-            color: #5d7188;
-            text-transform: uppercase;
-            margin-top: 2px;
-        }
-
-        /* Page Header */
-        .page-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-
-        .page-header h2 {
-            font-size: 15px;
-            color: #1a2a3a;
-        }
-
-        .page-header .close-btn {
-            background: none;
-            border: none;
-            font-size: 18px;
-            color: #6b7a8a;
-            cursor: pointer;
-            padding: 4px;
-        }
-
-        .page-header .close-btn:hover {
-            color: #dc2626;
-        }
-
-        /* Search */
-        .search-box {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 10px;
-        }
-
-        .search-box input {
-            flex: 1;
-            padding: 8px 12px;
-            border: 2px solid #e2e8f0;
-            border-radius: 10px;
-            font-size: 12px;
-        }
-
-        .search-box input:focus {
-            border-color: #2563eb;
-            outline: none;
-        }
-
-        /* Modal */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.5);
-            z-index: 999;
-            justify-content: center;
-            align-items: center;
-            padding: 10px;
-        }
-
-        .modal.show {
-            display: flex;
-        }
-
-        .modal-content {
-            background: white;
-            border-radius: 20px;
-            padding: 20px;
-            max-width: 420px;
-            width: 100%;
-            max-height: 85vh;
-            overflow-y: auto;
-        }
-
-        .modal-content h3 {
-            margin-bottom: 12px;
-            color: #1a2a3a;
-            font-size: 16px;
-        }
-
-        /* Tracking History Table */
-        .history-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 10px;
-            margin-top: 10px;
-        }
-
-        .history-table th {
-            background: #2563eb;
-            color: white;
-            padding: 6px 4px;
-            text-align: left;
-            font-weight: 600;
-            font-size: 9px;
-            position: sticky;
-            top: 0;
-            z-index: 5;
-        }
-
-        .history-table td {
-            padding: 5px 4px;
-            border-bottom: 1px solid #eef3fc;
-            font-size: 9px;
-        }
-
-        .history-table tr:hover {
-            background: #f8faff;
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: 1px 6px;
-            border-radius: 10px;
-            font-size: 8px;
-            font-weight: 600;
-        }
-
-        .status-badge.traveling {
-            background: #dbeafe;
-            color: #2563eb;
-        }
-
-        .status-badge.stopped {
-            background: #fef3c7;
-            color: #d97706;
-        }
-
-        .status-badge.waiting {
-            background: #fce4ec;
-            color: #dc2626;
-        }
-
-        /* Current Location Display */
-        .current-location-box {
-            background: #f0f7ff;
-            border-radius: 10px;
-            padding: 10px;
-            border: 1px solid #dbeafe;
-            margin-bottom: 10px;
-        }
-
-        .current-location-box .row {
-            display: flex;
-            justify-content: space-between;
-            padding: 3px 0;
-            font-size: 11px;
-        }
-
-        .current-location-box .label {
-            color: #6b7a8a;
-        }
-
-        .current-location-box .value {
-            font-weight: 600;
-            color: #1a2a3a;
-        }
-
-        /* Responsive */
-        @media (max-width: 480px) {
-            .app-container { padding: 12px; }
-            .form-row { grid-template-columns: 1fr; }
-            .dashboard-menu { grid-template-columns: 1fr 1fr; gap: 6px; }
-            .dashboard-card { padding: 10px 4px; }
-            .dashboard-card i { font-size: 18px; }
-            .dashboard-card .label { font-size: 8px; }
-            .top-menu { gap: 2px; }
-            .menu-btn { font-size: 9px; padding: 3px 5px; }
-            .menu-btn span { display: none; }
-            #map { height: 200px; }
-            table { font-size: 9px; }
-            table th, table td { padding: 4px 3px; }
-            .action-btns .btn-xs { font-size: 7px; padding: 2px 4px; }
-            .history-table { font-size: 8px; }
-            .history-table th, .history-table td { padding: 3px 2px; }
-        }
-    
-
-/* =========================================================
-   JAC LUXURY UI — PREMIUM GLASS / PURPLE GOLD THEME
-   Keeps the original application logic intact.
-   ========================================================= */
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TRY Accounting System</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
 :root{
-  --lux-bg:#090714;
-  --lux-panel:rgba(20,16,38,.82);
-  --lux-panel2:rgba(31,25,55,.78);
-  --lux-border:rgba(255,255,255,.10);
-  --lux-text:#f7f3ff;
-  --lux-muted:#aaa1bf;
-  --lux-purple:#8b5cf6;
-  --lux-purple2:#6d28d9;
-  --lux-gold:#f5c76a;
-  --lux-gold2:#d99a2b;
-  --lux-green:#35d07f;
-  --lux-red:#ff5d73;
-  --lux-shadow:0 30px 90px rgba(0,0,0,.45);
+  --primary:#0079C1; --primary-dark:#0063A0; --accent:#00AEEF;
+  --navy:#1A2A5E; --bg:#F5F7FA; --card:#FFFFFF; --border:#E4E8EE;
+  --text:#1A1A2E; --muted:#6B7280;
+  --green:#10B981; --green-bg:#ECFDF5;
+  --red:#EF4444; --red-bg:#FEF2F2;
+  --orange:#F59E0B; --orange-bg:#FFFBEB;
+  --blue-bg:#EFF8FF;
 }
-*{scrollbar-width:thin;scrollbar-color:#4b3b75 transparent}
-html{background:var(--lux-bg)}
-body{
-  background:
-    radial-gradient(circle at 10% 0%,rgba(139,92,246,.22),transparent 30%),
-    radial-gradient(circle at 90% 10%,rgba(245,199,106,.12),transparent 25%),
-    linear-gradient(135deg,#080611,#120d22 48%,#090714);
-  color:var(--lux-text);padding:24px;min-height:100vh;
-}
-body:before{
-  content:"";position:fixed;inset:0;pointer-events:none;opacity:.22;
-  background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);
-  background-size:42px 42px;mask-image:linear-gradient(to bottom,black,transparent 90%);
-}
-.app-container{
-  max-width:1180px;width:100%;min-height:720px;margin:0 auto;padding:26px;
-  background:linear-gradient(145deg,rgba(24,19,45,.92),rgba(11,9,24,.94));
-  border:1px solid var(--lux-border);border-radius:30px;box-shadow:var(--lux-shadow);
-  backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);overflow:hidden;
-}
-.app-header{margin-bottom:22px;padding:0 0 18px;border-bottom:1px solid var(--lux-border)}
-.app-title{gap:13px}
-.app-title i{
-  font-size:24px;color:#fff;background:linear-gradient(135deg,var(--lux-purple),var(--lux-purple2));
-  padding:12px;border-radius:15px;box-shadow:0 10px 30px rgba(109,40,217,.35)
-}
-.app-title h1{font-size:23px;letter-spacing:.5px;color:#fff}
-.app-title span{font-size:11px;color:var(--lux-muted);margin-top:2px}
-.top-menu{gap:6px}
-.menu-btn{color:#d9d2e8;background:rgba(255,255,255,.04);border:1px solid transparent;padding:8px 10px;border-radius:10px}
-.menu-btn:hover{background:rgba(255,255,255,.08);border-color:var(--lux-border);color:#fff}
-.menu-btn i{color:var(--lux-gold)}
-.dashboard-menu{grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
-.dashboard-card{
-  position:relative;overflow:hidden;background:linear-gradient(145deg,rgba(40,31,70,.86),rgba(22,17,42,.86));
-  border:1px solid var(--lux-border);border-radius:20px;padding:22px 12px;box-shadow:0 12px 30px rgba(0,0,0,.18)
-}
-.dashboard-card:before{content:"";position:absolute;inset:-40px auto auto -40px;width:100px;height:100px;background:rgba(139,92,246,.18);filter:blur(20px);border-radius:50%}
-.dashboard-card:hover{transform:translateY(-5px);box-shadow:0 18px 45px rgba(0,0,0,.32);border-color:rgba(139,92,246,.45)}
-.dashboard-card.active{border-color:var(--lux-gold);background:linear-gradient(145deg,rgba(70,51,92,.92),rgba(31,22,54,.92))}
-.dashboard-card i{font-size:28px;color:#c4a1ff;margin-bottom:9px;position:relative}
-.dashboard-card .label{font-size:12px;color:#fff;letter-spacing:.3px;position:relative}
-.dashboard-card .badge{background:linear-gradient(135deg,var(--lux-purple),#a78bfa);font-size:9px;padding:3px 9px;margin-top:7px}
-.dashboard-card .badge.success{background:linear-gradient(135deg,#169b59,var(--lux-green))}
-.dashboard-card .badge.warning{background:linear-gradient(135deg,#b87513,var(--lux-gold))}
-.page{animation:luxFade .35s ease}
-@keyframes luxFade{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
-.page-header{margin-bottom:18px}
-.page-header h2,.page-header h3{color:#fff;font-weight:750;letter-spacing:.2px}
-.page-header h2 i,.page-header h3 i{color:var(--lux-gold)!important}
-.page-header .close-btn{color:#bdb4d1;background:rgba(255,255,255,.04);border:1px solid var(--lux-border);border-radius:9px}
-.page-header .close-btn:hover{color:#fff;background:rgba(255,93,115,.15)}
-.form-group label{color:#d9d2e8;font-size:11px}
-.form-group label i{color:var(--lux-gold)}
-.form-group input,.form-group select,.search-box input{
-  background:rgba(255,255,255,.045);color:#fff;border:1px solid rgba(255,255,255,.11);border-radius:12px;padding:12px 13px
-}
-.form-group input::placeholder,.search-box input::placeholder{color:#807790}
-.form-group input:focus,.form-group select:focus,.search-box input:focus{border-color:var(--lux-purple);box-shadow:0 0 0 4px rgba(139,92,246,.14);background:rgba(255,255,255,.065)}
-.form-group select option{background:#1a1430;color:#fff}
-.btn{border-radius:12px;padding:11px 16px;box-shadow:0 8px 20px rgba(0,0,0,.18)}
-.btn-primary{background:linear-gradient(135deg,var(--lux-purple),var(--lux-purple2));color:#fff}
-.btn-primary:hover{background:linear-gradient(135deg,#9b72ff,#7c3aed)}
-.btn-success{background:linear-gradient(135deg,#159957,var(--lux-green));color:#fff}
-.btn-danger{background:linear-gradient(135deg,#dc3545,var(--lux-red));color:#fff}
-.btn-warning{background:linear-gradient(135deg,#b97812,var(--lux-gold));color:#16100a}
-.btn-secondary{background:rgba(255,255,255,.07);color:#e8e2f2;border:1px solid var(--lux-border)}
-.btn-secondary:hover{background:rgba(255,255,255,.12)}
-.table-container,.profile-card,.tracking-section,.route-info,.current-location-box,.location-log,.stat-card,.location-permission{
-  background:linear-gradient(145deg,rgba(38,30,64,.72),rgba(19,15,37,.72));border:1px solid var(--lux-border);box-shadow:0 10px 30px rgba(0,0,0,.14)
-}
-.table-container{border-radius:16px;padding:4px;overflow:auto}
-table{color:#e9e4f2;font-size:12px}
-table th{background:rgba(139,92,246,.17);color:#f4edff;border-bottom:1px solid rgba(255,255,255,.12)}
-table td{border-bottom:1px solid rgba(255,255,255,.07)}
-table tr:hover{background:rgba(139,92,246,.08)}
-.status-dot.tracking{background:var(--lux-green)}
-.status-dot.not-tracking{background:var(--lux-gold)}
-.status-dot.inactive{background:#777086}
-.profile-card{padding:20px;border-radius:18px}
-.profile-avatar{background:linear-gradient(135deg,var(--lux-purple),var(--lux-gold2));box-shadow:0 12px 30px rgba(109,40,217,.28)}
-.profile-name,.profile-detail .value,.route-info-item .value,.current-location-box .value{color:#fff}
-.profile-role{background:rgba(139,92,246,.18);color:#d9c8ff;border:1px solid rgba(139,92,246,.22)}
-.profile-detail{border-bottom-color:rgba(255,255,255,.08)}
-.profile-detail .label,.route-info-item .label,.current-location-box .label{color:#a99fbc}
-.tracking-section{background:linear-gradient(135deg,rgba(28,70,56,.45),rgba(25,20,46,.72));border-color:rgba(53,208,127,.22)}
-.tracking-btn.active{background:linear-gradient(135deg,#dc3545,var(--lux-red))}
-.tracking-btn.inactive{background:linear-gradient(135deg,#159957,var(--lux-green))}
-.pulse-dot{background:var(--lux-green)}
-.stats-grid{gap:12px}
-.stat-card{padding:14px;border-radius:14px}
-.stat-card .number{font-size:19px;color:#fff}
-.stat-card .label{font-size:8px;color:#aaa1bf}
-#map{height:430px;border-radius:18px;border:1px solid var(--lux-border);box-shadow:0 15px 40px rgba(0,0,0,.25);filter:saturate(.9) contrast(1.02)}
-.location-permission{background:linear-gradient(135deg,rgba(120,84,22,.24),rgba(35,25,49,.8));border-color:rgba(245,199,106,.3)}
-.location-permission .icon{color:var(--lux-gold)}
-.location-log{border-radius:12px}
-.log-entry{border-bottom-color:rgba(255,255,255,.07);color:#d8d0e5}
-.modal{background:rgba(4,2,10,.78);backdrop-filter:blur(8px)}
-.modal-content{background:linear-gradient(145deg,#211a38,#100c20);border:1px solid var(--lux-border);border-radius:22px;box-shadow:0 30px 90px rgba(0,0,0,.55);color:#fff}
-.modal-content h3{color:#fff}
-.history-table th{background:linear-gradient(135deg,var(--lux-purple2),#4c1d95)}
-.history-table td{border-bottom-color:rgba(255,255,255,.07);color:#ddd5e9}
-.history-table tr:hover{background:rgba(139,92,246,.08)}
-.notification{top:24px;right:24px;background:linear-gradient(135deg,#159957,var(--lux-green));border:1px solid rgba(255,255,255,.16);box-shadow:0 18px 50px rgba(0,0,0,.35)}
-.notification.error{background:linear-gradient(135deg,#c62f42,var(--lux-red))}
-#dashboardMenu>div:last-child{color:#8f86a3!important;border-top-color:var(--lux-border)!important}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Inter','Segoe UI',system-ui,sans-serif}
+body{background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;-webkit-font-smoothing:antialiased}
 
-/* Desktop two-column feel for forms while preserving mobile layout */
-@media (min-width:760px){
-  #masterForm{display:grid;grid-template-columns:1fr 1fr;gap:0 18px}
-  #masterForm>.form-group:nth-child(1),#masterForm>.form-group:nth-child(2),#masterForm>.form-group:nth-child(7),#masterForm>.btn-secondary,#masterForm>#credentialsSection{grid-column:1/-1}
-  #masterForm>.form-row{grid-column:1/-1}
-  #credentialsSection{display:block}
-  #usersPage .table-container{min-height:360px}
-}
-@media (max-width:760px){body{padding:10px}.app-container{padding:16px;border-radius:22px}.dashboard-menu{grid-template-columns:1fr 1fr;gap:9px}.dashboard-card{padding:16px 8px}#map{height:280px}.app-title h1{font-size:20px}}
+/* Layout */
+.app{display:flex;min-height:100vh}
+.sidebar{width:260px;background:var(--navy);padding:0;position:fixed;height:100vh;overflow-y:auto;z-index:10;display:flex;flex-direction:column}
+.sidebar::-webkit-scrollbar{width:3px}
+.sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.2)}
+.logo{padding:22px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid rgba(255,255,255,0.1)}
+.logo-icon{width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#00AEEF,#0079C1);display:grid;place-items:center;font-size:22px;box-shadow:0 4px 12px rgba(0,174,239,0.35)}
+.logo-txt h1{font-size:16px;font-weight:700;color:#fff;letter-spacing:-.2px}
+.logo-txt p{font-size:10.5px;color:rgba(255,255,255,0.6);letter-spacing:.5px;text-transform:uppercase;margin-top:2px}
+.nav{padding:12px 12px 20px;flex:1;display:flex;flex-direction:column}
+.nav-section{font-size:10px;font-weight:700;color:rgba(255,255,255,0.4);text-transform:uppercase;letter-spacing:1.2px;padding:16px 12px 6px}
+.nav-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:8px;color:rgba(255,255,255,0.72);cursor:pointer;font-size:13px;font-weight:500;margin-bottom:2px;transition:all .15s}
+.nav-item:hover{background:rgba(255,255,255,0.08);color:#fff}
+.nav-item.active{background:var(--primary);color:#fff;font-weight:600;box-shadow:0 2px 8px rgba(0,121,193,0.4)}
+.nav-item .ic{font-size:16px;width:20px;text-align:center}
 
+.main{margin-left:260px;flex:1;padding:24px 32px;max-width:calc(100% - 260px)}
+.topbar{margin-bottom:24px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px}
+.page-title{font-size:24px;font-weight:700;color:var(--text);letter-spacing:-.3px}
+.page-sub{color:var(--muted);font-size:13px;margin-top:4px}
+
+/* Cards & Grids */
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;box-shadow:0 1px 3px rgba(0,0,0,0.04);margin-bottom:16px}
+.card-highlight{border-left:4px solid var(--primary)}
+.grid{display:grid;gap:16px}
+.grid-4{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.grid-2{grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px 20px;position:relative;overflow:hidden}
+.stat::after{content:'';position:absolute;right:-20px;top:-20px;width:80px;height:80px;border-radius:50%;background:var(--blue-bg);opacity:.6}
+.stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;font-weight:600;display:flex;align-items:center;gap:6px}
+.stat-val{font-size:26px;font-weight:800;margin-top:8px;color:var(--navy);letter-spacing:-.5px}
+.stat-val.green{color:var(--green)}
+.stat-val.red{color:var(--red)}
+.stat-sub{font-size:12px;color:var(--muted);margin-top:4px}
+
+/* Buttons & Forms */
+.btn{padding:9px 16px;border-radius:8px;border:1px solid var(--border);background:#fff;color:var(--text);cursor:pointer;font-size:13px;font-weight:600;transition:all .15s;display:inline-flex;align-items:center;gap:6px;font-family:inherit}
+.btn:hover{background:#F8FAFC;border-color:#CBD5E1}
+.btn-primary{background:linear-gradient(135deg,var(--primary),var(--accent));color:#fff;border:none;box-shadow:0 2px 6px rgba(0,121,193,0.3)}
+.btn-primary:hover{background:linear-gradient(135deg,var(--primary-dark),var(--primary));box-shadow:0 4px 10px rgba(0,121,193,0.4)}
+.btn-green{background:var(--green);color:#fff;border:none}
+.btn-green:hover{background:#059669}
+.btn-red{background:var(--red);color:#fff;border:none}
+.btn-red:hover{background:#DC2626}
+.btn-sm{padding:6px 11px;font-size:12px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12px;color:var(--muted);font-weight:600;margin-bottom:6px}
+.field input,.field select,.field textarea{width:100%;padding:10px 12px;background:#fff;border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13.5px;outline:none;transition:all .15s;font-family:inherit}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(0,121,193,0.1)}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* Tables */
+.table-wrap{overflow-x:auto;border-radius:8px;border:1px solid var(--border);background:#fff}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+thead th{background:#F8FAFC;color:var(--muted);padding:11px 14px;text-align:left;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);white-space:nowrap}
+tbody td{padding:11px 14px;border-bottom:1px solid #F1F5F9;color:var(--text);white-space:nowrap}
+tbody tr:hover{background:#FAFBFC}
+tbody tr:last-child td{border-bottom:none}
+tbody tr.total-row{background:var(--blue-bg);font-weight:700;color:var(--navy)}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+.green-txt{color:var(--green);font-weight:600}
+.red-txt{color:var(--red);font-weight:600}
+
+/* Modals & Toast */
+.modal-bg{position:fixed;inset:0;background:rgba(15,23,42,0.55);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+.modal-bg.show{display:flex;animation:fadeIn .15s}
+.modal{background:#fff;border-radius:16px;padding:26px;width:100%;max-width:520px;max-height:90vh;overflow-y:auto;box-shadow:0 25px 60px rgba(0,0,0,0.3);animation:slideUp .25s}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideUp{from{transform:translateY(15px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal h3{font-size:19px;margin-bottom:4px;color:var(--text);font-weight:700}
+.modal p.sub{color:var(--muted);font-size:13px;margin-bottom:20px}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
+
+/* Denomination UI */
+.denom-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #F1F5F9}
+.denom-row .denom-val{font-weight:700;color:var(--navy);width:60px;font-size:13px}
+.denom-row input{width:80px;padding:6px;background:#fff;border:1px solid var(--border);border-radius:6px;color:var(--text);text-align:right;font-size:13px}
+.denom-row input:focus{outline:none;border-color:var(--primary)}
+.denom-row .denom-amt{width:100px;text-align:right;color:var(--muted);font-size:12px;font-weight:600}
+.denom-total{display:flex;justify-content:space-between;padding:12px 0;margin-top:6px;border-top:2px solid var(--primary);font-size:16px;font-weight:700;color:var(--navy)}
+.denom-status{padding:10px;border-radius:8px;text-align:center;font-size:13px;font-weight:600;margin-top:12px}
+
+.toast{position:fixed;bottom:24px;right:24px;background:var(--navy);padding:14px 22px;border-radius:10px;color:#fff;font-size:13.5px;font-weight:600;box-shadow:0 10px 30px rgba(0,0,0,0.2);z-index:200;opacity:0;transform:translateY(15px);transition:all .25s;pointer-events:none;border-left:4px solid var(--green)}
+.toast.show{opacity:1;transform:translateY(0)}
+.toast.error{border-left-color:var(--red)}
+
+.empty{text-align:center;padding:50px 20px;color:var(--muted)}
+.empty .ic{font-size:48px;margin-bottom:12px;opacity:.4}
+.filter-bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;align-items:end}
+.filter-bar .field{margin-bottom:0;flex:1;min-width:140px}
+.hidden{display:none!important}
+.chip{display:inline-block;padding:3px 9px;border-radius:5px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.3px}
+.chip-cash{background:#ECFDF5;color:#059669}
+.chip-bank{background:#EFF8FF;color:#0284C7}
+.chip-receipt{background:#ECFDF5;color:#059669}
+.chip-payment{background:#FEF2F2;color:#DC2626}
+.section-title{font-size:13px;font-weight:700;color:var(--navy);margin:0 0 14px;padding-bottom:8px;border-bottom:2px solid var(--primary);display:inline-block}
+
+/* Upload Zone CSS FIX */
+.upload-zone{border:2px dashed #CBD5E1;border-radius:12px;padding:36px 20px;text-align:center;cursor:pointer;transition:all .2s;background:#FAFBFC;display:block}
+.upload-zone:hover{border-color:var(--primary);background:var(--blue-bg)}
+.upload-zone .up-icon{font-size:32px;line-height:1;margin-bottom:12px;opacity:.8;display:block}
+.upload-zone .up-text{font-size:14px;font-weight:600;color:var(--text)}
+.upload-zone .up-sub{font-size:12px;color:var(--muted);margin-top:4px}
+.upload-zone input{display:none}
+.upload-info{font-size:12px;color:var(--muted);margin-top:8px;padding:10px;background:var(--blue-bg);border-radius:6px}
+
+/* Login Screen */
+.login-overlay{position:fixed;inset:0;background:linear-gradient(135deg,var(--navy),var(--primary-dark));z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px}
+.login-card{background:#fff;border-radius:16px;padding:40px 30px;width:100%;max-width:380px;box-shadow:0 25px 50px rgba(0,0,0,0.3);text-align:center;animation:slideUp .3s}
+.login-logo{width:60px;height:60px;border-radius:16px;background:linear-gradient(135deg,#00AEEF,#0079C1);display:grid;place-items:center;font-size:30px;margin:0 auto 15px;box-shadow:0 8px 20px rgba(0,121,193,0.4)}
+.login-title{font-size:22px;font-weight:800;color:var(--navy);margin-bottom:4px}
+.login-sub{font-size:13px;color:var(--muted);margin-bottom:25px}
+
+/* Print Styles */
+@media print {
+  .sidebar, .topbar, .no-print, .nav, .mobile-menu { display: none !important; }
+  .main { margin-left: 0 !important; padding: 0 !important; max-width: 100% !important; }
+  body { background: #fff; color: #000; font-size: 12px; }
+  .card, .stat { border: 1px solid #ccc; box-shadow: none; page-break-inside: avoid; margin-bottom: 10px; }
+  .stat-val { font-size: 20px; }
+  .table-wrap { border: 1px solid #ccc; }
+  table th, table td { padding: 6px 8px; border-bottom: 1px solid #eee; }
+  * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .print-only { display: block !important; }
+}
+.print-only { display: none; }
+
+@media(max-width:900px){
+  .sidebar{transform:translateX(-100%);transition:.25s}
+  .sidebar.open{transform:translateX(0)}
+  .main{margin-left:0;max-width:100%;padding:16px}
+  .mobile-menu{display:flex!important}
+  .field-row{grid-template-columns:1fr}
+}
+.mobile-menu{display:none;position:fixed;top:14px;left:14px;z-index:20;width:42px;height:42px;border-radius:10px;background:var(--navy);align-items:center;justify-content:center;cursor:pointer;font-size:18px;color:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.2);border:none}
 </style>
-
-
-
-
-<style id="white-orange-luxury-theme">
-:root{
-  --lux-white:#ffffff;
-  --lux-surface:#ffffff;
-  --lux-surface-2:#fffaf5;
-  --lux-border:#eee5dc;
-  --lux-text:#24201d;
-  --lux-muted:#77706a;
-  --lux-orange:#f47b20;
-  --lux-orange-dark:#d9610d;
-  --lux-orange-light:#fff1e5;
-  --lux-shadow:0 12px 35px rgba(90,55,25,.08);
-}
-html,body{
-  background:#ffffff !important;
-  color:var(--lux-text) !important;
-}
-body{
-  background:#ffffff !important;
-}
-body::before,body::after{display:none !important}
-
-/* No dark theme / dark background anywhere */
-.dark,.dark-theme,.dark-mode,[data-theme="dark"]{
-  background:#fff !important;
-  color:var(--lux-text) !important;
-}
-
-/* White luxury surfaces */
-.container,.wrapper,.dashboard,.page,.card,.dashboard-card,
-.profile-card,.modal-content,table,.table-container,.form-card,
-.panel,.login-card,header,nav,footer{
-  background:#fff !important;
-  color:var(--lux-text) !important;
-}
-.dashboard-card,.card,.profile-card,.modal-content,.form-card,
-.panel,.login-card,.table-container{
-  border:1px solid var(--lux-border) !important;
-  box-shadow:var(--lux-shadow) !important;
-}
-.dashboard-card:hover{
-  border-color:rgba(244,123,32,.28) !important;
-  box-shadow:0 18px 45px rgba(244,123,32,.12) !important;
-}
-h1,h2,h3,h4,h5,h6,.page-header h2,.profile-name{
-  color:#24201d !important;
-}
-p,label,.profile-role,.profile-detail .label,.muted,small{
-  color:var(--lux-muted) !important;
-}
-
-/* Orange luxury accents */
-a{color:var(--lux-orange) !important}
-input,select,textarea{
-  background:#fff !important;
-  color:#24201d !important;
-  border:1px solid #ded8d2 !important;
-}
-input:focus,select:focus,textarea:focus{
-  border-color:var(--lux-orange) !important;
-  box-shadow:0 0 0 3px rgba(244,123,32,.11) !important;
-}
-.btn-primary{
-  background:linear-gradient(135deg,#f47b20,#ff9a4d) !important;
-  color:#fff !important;border:0 !important;
-}
-.btn-success{
-  background:linear-gradient(135deg,#e96d16,#f99a52) !important;
-  color:#fff !important;border:0 !important;
-}
-.btn-warning{
-  background:#fff5eb !important;
-  color:#c85b0d !important;
-  border:1px solid #f2c9a7 !important;
-}
-.btn-danger{
-  background:#fff1f0 !important;
-  color:#c23f35 !important;
-  border:1px solid #efc5c1 !important;
-}
-.btn-secondary{
-  background:#f7f5f3 !important;
-  color:#4c4844 !important;
-  border:1px solid #ded9d4 !important;
-}
-.badge{
-  background:#fff2e7 !important;
-  color:#d86112 !important;
-  border:1px solid #f4cfb1 !important;
-}
-.badge.success{
-  background:#f0faf4 !important;
-  color:#21864a !important;
-  border-color:#ccebd8 !important;
-}
-.profile-avatar{
-  background:linear-gradient(135deg,#f47b20,#ffb06e) !important;
-  color:#fff !important;
-  box-shadow:0 8px 20px rgba(244,123,32,.20) !important;
-}
-.close-btn{
-  background:#fff !important;color:#555 !important;
-  border:1px solid #e3ded9 !important;
-}
-.close-btn:hover{
-  color:var(--lux-orange) !important;
-  border-color:#f0c4a1 !important;
-}
-thead th{
-  background:#fffaf5 !important;
-  color:#5f5852 !important;
-  border-bottom:1px solid #eee5dc !important;
-}
-tbody td{
-  background:#fff !important;
-  color:#292522 !important;
-  border-bottom:1px solid #f1ece8 !important;
-}
-tbody tr:hover td{background:#fffaf6 !important}
-.log-entry{
-  background:#fffaf5 !important;
-  border:1px solid #eee5dc !important;
-}
-.notification{
-  background:#fff !important;color:#24201d !important;
-  border:1px solid #eee5dc !important;
-  box-shadow:0 14px 35px rgba(70,45,25,.10) !important;
-}
-::-webkit-scrollbar{width:8px;height:8px}
-::-webkit-scrollbar-track{background:#fff}
-::-webkit-scrollbar-thumb{background:#ddd5ce;border-radius:10px}
-::-webkit-scrollbar-thumb:hover{background:#c9bfb7}
-
-/* Hide any visible dark-mode toggle/control */
-#darkModeToggle,#darkToggle,.dark-toggle,.theme-toggle,
-[data-action="dark-mode"],[data-theme-toggle="dark"]{
-  display:none !important;
-}
-</style>
-
-
-<style id="exact-orange-header-fix">
-/* Exact area shown in screenshot: remove dark shell */
-body{
-  background:#ffffff !important;
-  color:#24201d !important;
-}
-body:before, body:after{
-  display:none !important;
-}
-.app-container{
-  background:#ffffff !important;
-  border:1px solid #eee5dc !important;
-  box-shadow:0 18px 55px rgba(90,55,25,.08) !important;
-}
-
-/* Header strip = orange luxury, NOT dark */
-.app-container > .app-header,
-.app-header{
-  background:linear-gradient(135deg,#f47b20 0%,#f58a35 52%,#ffad68 100%) !important;
-  margin:-26px -26px 22px !important;
-  padding:20px 26px 18px !important;
-  border-bottom:0 !important;
-  border-radius:30px 30px 0 0 !important;
-}
-.app-header .app-title h1,
-.app-header .app-title span,
-.app-header .menu-btn{
-  color:#ffffff !important;
-}
-.app-header .menu-btn{
-  background:rgba(255,255,255,.13) !important;
-  border-color:rgba(255,255,255,.18) !important;
-}
-.app-header .menu-btn:hover{
-  background:rgba(255,255,255,.23) !important;
-  color:#ffffff !important;
-}
-.app-header .menu-btn i{
-  color:#fff8ef !important;
-}
-.app-header .app-title i{
-  color:#f47b20 !important;
-  background:#ffffff !important;
-  box-shadow:0 8px 22px rgba(120,55,10,.16) !important;
-}
-
-/* Everything after the orange header remains clean white */
-.dashboard-menu,
-.page,
-.profile-card,
-.card,
-.table-container,
-.form-card,
-.panel,
-.login-card{
-  background:#ffffff !important;
-}
-</style>
-
-
-<style id="automatic-mobile-pc-responsive">
-/* ===== AUTOMATIC PC + TABLET + MOBILE RESPONSIVE ===== */
-*{box-sizing:border-box}
-html{width:100%;overflow-x:hidden}
-body{
-  width:100%;
-  min-width:0 !important;
-  overflow-x:hidden !important;
-  margin:0;
-}
-img,svg,canvas,iframe{max-width:100%;height:auto}
-
-/* Main shell automatically scales */
-.app-container{
-  width:min(1180px, calc(100% - 32px)) !important;
-  max-width:1180px !important;
-  margin:24px auto !important;
-  min-width:0 !important;
-}
-
-/* Header never overflows */
-.app-header{
-  width:100% !important;
-  min-width:0 !important;
-}
-.app-header > *{min-width:0}
-.app-title{min-width:0}
-.app-title h1,
-.app-title span{
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-}
-
-/* Dashboard cards automatically fit available width */
-.dashboard-grid,
-.cards-grid,
-.stats-grid,
-.dashboard-cards{
-  width:100%;
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
-  gap:16px;
-}
-.dashboard-card{min-width:0}
-
-/* Forms automatically become columns on large screens */
-.form-grid,
-.form-row,
-.form-section{
-  width:100%;
-  min-width:0;
-}
-.form-grid{
-  display:grid;
-  grid-template-columns:repeat(2,minmax(0,1fr));
-  gap:16px;
-}
-.form-group{min-width:0}
-input,select,textarea,button{max-width:100%;font-size:16px}
-
-/* Tables scroll instead of breaking mobile layout */
-.table-container,
-.table-responsive{
-  width:100%;
-  max-width:100%;
-  overflow-x:auto !important;
-  -webkit-overflow-scrolling:touch;
-}
-table{
-  width:100%;
-  min-width:680px;
-}
-
-/* Map stays responsive */
-#map,
-.map-container,
-.leaflet-container{
-  width:100% !important;
-  max-width:100% !important;
-}
-
-/* Modals fit every screen */
-.modal{
-  padding:12px !important;
-}
-.modal-content{
-  width:min(720px, calc(100vw - 24px)) !important;
-  max-width:calc(100vw - 24px) !important;
-  max-height:calc(100vh - 24px) !important;
-  overflow-y:auto !important;
-}
-
-/* ===== TABLET ===== */
-@media (max-width:900px){
-  .app-container{
-    width:calc(100% - 24px) !important;
-    margin:12px auto !important;
-  }
-  .form-grid{
-    grid-template-columns:1fr;
-  }
-  .dashboard-grid,
-  .cards-grid,
-  .stats-grid,
-  .dashboard-cards{
-    grid-template-columns:repeat(2,minmax(0,1fr));
-  }
-}
-
-/* ===== MOBILE ===== */
-@media (max-width:600px){
-  .app-container{
-    width:100% !important;
-    max-width:none !important;
-    margin:0 !important;
-    border-radius:0 !important;
-    border-left:0 !important;
-    border-right:0 !important;
-  }
-
-  .app-container > .app-header,
-  .app-header{
-    margin:0 0 14px !important;
-    padding:14px 15px !important;
-    border-radius:0 !important;
-    min-height:58px;
-  }
-
-  .app-header{
-    display:flex !important;
-    align-items:center !important;
-    justify-content:space-between !important;
-    gap:10px !important;
-  }
-
-  .app-title h1{
-    font-size:15px !important;
-    line-height:1.2 !important;
-  }
-  .app-title span{
-    font-size:9px !important;
-  }
-
-  .header-menu,
-  #headerMenu{
-    gap:5px !important;
-    flex-wrap:wrap !important;
-    justify-content:flex-end !important;
-  }
-
-  .menu-btn{
-    min-width:38px !important;
-    min-height:38px !important;
-    padding:8px !important;
-  }
-
-  .dashboard-grid,
-  .cards-grid,
-  .stats-grid,
-  .dashboard-cards{
-    grid-template-columns:1fr !important;
-    gap:12px !important;
-  }
-
-  .dashboard-card{
-    width:100% !important;
-    min-height:88px !important;
-  }
-
-  .page{
-    width:100% !important;
-    padding:14px !important;
-  }
-
-  .page-header{
-    display:flex !important;
-    align-items:center !important;
-    justify-content:space-between !important;
-    gap:8px !important;
-  }
-  .page-header h2{
-    font-size:18px !important;
-    line-height:1.25 !important;
-  }
-
-  .form-grid,
-  .form-row,
-  .profile-detail{
-    grid-template-columns:1fr !important;
-    flex-direction:column !important;
-  }
-
-  .form-group{
-    width:100% !important;
-  }
-
-  input,select,textarea{
-    width:100% !important;
-    min-height:44px !important;
-  }
-
-  button,.btn{
-    min-height:42px !important;
-  }
-
-  .action-btns{
-    display:flex !important;
-    flex-wrap:wrap !important;
-    gap:6px !important;
-  }
-
-  .profile-card{
-    width:100% !important;
-    padding:14px !important;
-  }
-
-  .profile-header{
-    gap:10px !important;
-  }
-
-  .profile-name{
-    font-size:17px !important;
-  }
-
-  #map,
-  .map-container,
-  .leaflet-container{
-    min-height:300px !important;
-  }
-
-  .modal-content{
-    width:calc(100vw - 20px) !important;
-    max-width:calc(100vw - 20px) !important;
-    margin:0 auto !important;
-    border-radius:16px !important;
-  }
-
-  .notification{
-    left:10px !important;
-    right:10px !important;
-    width:auto !important;
-    max-width:none !important;
-  }
-}
-
-/* ===== VERY SMALL PHONES ===== */
-@media (max-width:380px){
-  .app-header{
-    padding:12px 10px !important;
-  }
-  .app-title h1{font-size:13px !important}
-  .page{padding:10px !important}
-  .page-header h2{font-size:16px !important}
-  .dashboard-card{min-height:78px !important}
-}
-
-/* Touch-friendly controls */
-@media (hover:none) and (pointer:coarse){
-  button,.btn,.dashboard-card,.close-btn{
-    -webkit-tap-highlight-color:transparent;
-  }
-  .dashboard-card:hover{
-    transform:none !important;
-  }
-}
-</style>
-
 </head>
 <body>
 
-    <div class="app-container">
-        <!-- Notification -->
-        <div id="notification" class="notification"></div>
-
-        <!-- Header -->
-        <div class="app-header">
-            <div class="app-title">
-                <i class="fas fa-users"></i>
-                <div>
-                    <h1>JAC</h1>
-                    <span id="headerSubtext">Dashboard</span>
-                </div>
-            </div>
-            <div id="headerMenu" style="display:none;" class="top-menu">
-                <button class="menu-btn" onclick="showProfile()">
-                    <i class="fas fa-user-circle"></i> <span>Profile</span>
-                </button>
-                <button class="menu-btn" onclick="alert('Settings coming soon!')">
-                    <i class="fas fa-cog"></i> <span>Settings</span>
-                </button>
-                <button class="menu-btn" onclick="logoutUser()" style="color:#dc2626;">
-                    <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- ==================== DASHBOARD MENU ==================== -->
-        <div id="dashboardMenu">
-            <div class="dashboard-menu">
-                <div class="dashboard-card" onclick="switchPage('master')">
-                    <i class="fas fa-user-plus"></i>
-                    <div class="label">Master</div>
-                    <span class="badge">Register</span>
-                </div>
-                <div class="dashboard-card" onclick="switchPage('users')">
-                    <i class="fas fa-users"></i>
-                    <div class="label">Users</div>
-                    <span class="badge" id="userCountBadge">0</span>
-                </div>
-                <div class="dashboard-card" onclick="switchPage('login')">
-                    <i class="fas fa-sign-in-alt"></i>
-                    <div class="label">Login</div>
-                    <span class="badge">Sign In</span>
-                </div>
-                <div class="dashboard-card" onclick="switchPage('tracking')">
-                    <i class="fas fa-map-marked-alt"></i>
-                    <div class="label">Tracking</div>
-                    <span class="badge" id="trackingBadge">Live</span>
-                </div>
-            </div>
-            <div style="text-align:center; padding:8px; color:#6b7a8a; font-size:11px; border-top:1px solid #eef3fc;">
-                <i class="fas fa-arrow-up"></i> Select an option above
-            </div>
-        </div>
-
-        <!-- ==================== PAGE 1: MASTER (Registration) ==================== -->
-        <div id="masterPage" class="page">
-            <div class="page-header">
-                <h2><i class="fas fa-user-plus" style="color:#2563eb;"></i> Employee Registration</h2>
-                <button class="close-btn" onclick="goToDashboard()">✕</button>
-            </div>
-
-            <form id="masterForm" onsubmit="return false;">
-                <div class="form-group">
-                    <label><i class="fas fa-user"></i> Employee Name</label>
-                    <input type="text" id="empName" placeholder="Enter full name" required>
-                </div>
-
-                <div class="form-group">
-                    <label><i class="fas fa-briefcase"></i> Designation</label>
-                    <select id="empDesignation" required>
-                        <option value="">Select Designation</option>
-                        <option value="Collection">Collection</option>
-                        <option value="Marketing">Marketing</option>
-                        <option value="Officers">Officers</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label><i class="fas fa-id-card"></i> Employee ID</label>
-                    <input type="text" id="empId" placeholder="Enter employee ID" required>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label><i class="fas fa-tint"></i> Blood Group</label>
-                        <select id="empBlood" required>
-                            <option value="">Select</option>
-                            <option value="A+">A+</option>
-                            <option value="A-">A-</option>
-                            <option value="B+">B+</option>
-                            <option value="B-">B-</option>
-                            <option value="AB+">AB+</option>
-                            <option value="AB-">AB-</option>
-                            <option value="O+">O+</option>
-                            <option value="O-">O-</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label><i class="fas fa-phone"></i> Contact Number</label>
-                        <input type="tel" id="empContact" placeholder="10 digits" required>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label><i class="fas fa-phone-alt"></i> Emergency Contact</label>
-                    <input type="tel" id="empEmergency" placeholder="Emergency contact number" required>
-                </div>
-
-                <div class="form-group">
-                    <label><i class="fas fa-envelope"></i> Mail ID</label>
-                    <input type="email" id="empEmail" placeholder="Enter email address" required>
-                </div>
-
-                <div class="form-group">
-                    <label><i class="fas fa-map-pin"></i> Address</label>
-                    <input type="text" id="empAddress" placeholder="Enter address">
-                </div>
-
-                <button type="button" class="btn btn-secondary" onclick="nextStep()">
-                    <i class="fas fa-arrow-right"></i> Next
-                </button>
-
-                <div id="credentialsSection" style="display:none; border-top:2px solid #f0f4f9; padding-top:12px; margin-top:12px;">
-                    <div class="form-group">
-                        <label><i class="fas fa-user-circle"></i> Create Username</label>
-                        <input type="text" id="empUsername" placeholder="Choose a username" required>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label><i class="fas fa-lock"></i> Create Password</label>
-                            <input type="password" id="empPassword" placeholder="Min 6 characters" required>
-                        </div>
-                        <div class="form-group">
-                            <label><i class="fas fa-check-circle"></i> Confirm Password</label>
-                            <input type="password" id="empConfirmPassword" placeholder="Re-enter password" required>
-                        </div>
-                    </div>
-
-                    <button type="submit" class="btn btn-success" onclick="submitRegistration()">
-                        <i class="fas fa-save"></i> Submit
-                    </button>
-                </div>
-            </form>
-        </div>
-
-        <!-- ==================== PAGE 2: USERS DETAILS ==================== -->
-        <div id="usersPage" class="page">
-            <div class="page-header">
-                <h2><i class="fas fa-users" style="color:#2563eb;"></i> Users Details</h2>
-                <button class="close-btn" onclick="goToDashboard()">✕</button>
-            </div>
-
-            <div class="search-box">
-                <input type="text" id="searchUser" placeholder="🔍 Search by name or ID..." onkeyup="filterUsers()">
-                <button class="btn btn-primary btn-sm" onclick="refreshUsers()" style="width:auto; padding:8px 12px;">
-                    <i class="fas fa-sync-alt"></i>
-                </button>
-            </div>
-
-            <div class="table-container">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>S.No</th>
-                            <th>ID</th>
-                            <th>Name</th>
-                            <th>Designation</th>
-                            <th>Status</th>
-                            <th>View</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="usersTableBody">
-                        <tr>
-                            <td colspan="7" style="text-align:center; color:#6b7a8a; padding:20px;">
-                                <i class="fas fa-spinner fa-spin"></i> Loading users...
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            <div style="margin-top:10px; text-align:center; font-size:10px; color:#6b7a8a;">
-                Total Users: <span id="totalUsersDisplay">0</span>
-            </div>
-        </div>
-
-        <!-- ==================== PAGE 3: LOGIN ==================== -->
-        <div id="loginPage" class="page">
-            <div class="page-header">
-                <h2><i class="fas fa-sign-in-alt" style="color:#2563eb;"></i> Login</h2>
-                <button class="close-btn" onclick="goToDashboard()">✕</button>
-            </div>
-
-            <form id="loginForm" onsubmit="return false;">
-                <div class="form-group">
-                    <label><i class="fas fa-user"></i> Username</label>
-                    <input type="text" id="loginUsername" placeholder="Enter username" required>
-                </div>
-                <div class="form-group">
-                    <label><i class="fas fa-lock"></i> Password</label>
-                    <input type="password" id="loginPassword" placeholder="Enter password" required>
-                </div>
-                <button type="submit" class="btn btn-primary" onclick="loginUser()">
-                    <i class="fas fa-sign-in-alt"></i> Login
-                </button>
-                <p style="text-align:center; margin-top:10px; color:#6b7a8a; font-size:12px;">
-                    Don't have an account? <a href="#" onclick="switchPage('master')" style="color:#2563eb; text-decoration:none; font-weight:600;">Register</a>
-                </p>
-            </form>
-        </div>
-
-        <!-- ==================== PAGE 4: TRACKING ==================== -->
-        <div id="trackingPage" class="page">
-            <div class="page-header">
-                <h2><i class="fas fa-map-marked-alt" style="color:#2563eb;"></i> Live Tracking</h2>
-                <button class="close-btn" onclick="goToDashboard()">✕</button>
-            </div>
-
-            <!-- Profile Section -->
-            <div class="profile-card" id="profileCard">
-                <div class="profile-header">
-                    <div class="profile-avatar" id="profileAvatar">JD</div>
-                    <div>
-                        <div class="profile-name" id="profileName">John Doe</div>
-                        <div class="profile-role" id="profileRole">Collection</div>
-                    </div>
-                </div>
-                <div class="profile-detail">
-                    <span class="label"><i class="fas fa-id-card"></i> Employee ID</span>
-                    <span class="value" id="profileId">-</span>
-                </div>
-                <div class="profile-detail">
-                    <span class="label"><i class="fas fa-tint"></i> Blood Group</span>
-                    <span class="value" id="profileBlood">-</span>
-                </div>
-                <div class="profile-detail">
-                    <span class="label"><i class="fas fa-phone"></i> Contact Number</span>
-                    <span class="value" id="profileContact">-</span>
-                </div>
-                <div class="profile-detail">
-                    <span class="label"><i class="fas fa-phone-alt"></i> Emergency Contact</span>
-                    <span class="value" id="profileEmergency">-</span>
-                </div>
-                <div class="profile-detail">
-                    <span class="label"><i class="fas fa-envelope"></i> Mail ID</span>
-                    <span class="value" id="profileEmail">-</span>
-                </div>
-                <div class="profile-detail">
-                    <span class="label"><i class="fas fa-map-pin"></i> Address</span>
-                    <span class="value" id="profileAddress">-</span>
-                </div>
-            </div>
-
-            <!-- Current Location Display -->
-            <div class="current-location-box">
-                <div class="row">
-                    <span class="label"><i class="fas fa-location-dot"></i> Current Location</span>
-                    <span class="value" id="currentLocationDisplay">Waiting for GPS...</span>
-                </div>
-                <div class="row">
-                    <span class="label"><i class="fas fa-clock"></i> Last Update</span>
-                    <span class="value" id="lastUpdateDisplay">Never</span>
-                </div>
-            </div>
-
-            <!-- Location Permission -->
-            <div id="locationPermission" class="location-permission">
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <i class="fas fa-exclamation-triangle icon"></i>
-                    <div>
-                        <p style="font-weight:600; color:#856404; font-size:12px;">Location Access Required</p>
-                        <p style="font-size:10px; color:#856404;">Please allow location tracking</p>
-                    </div>
-                </div>
-                <button class="btn btn-primary btn-sm" style="margin-top:6px;" onclick="requestLocation()">
-                    <i class="fas fa-location-dot"></i> Allow Location
-                </button>
-            </div>
-
-            <!-- Map -->
-            <div id="map"></div>
-
-            <!-- Stats -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="number" id="totalDistance">0</div>
-                    <div class="label"><i class="fas fa-road"></i> Distance</div>
-                </div>
-                <div class="stat-card">
-                    <div class="number" id="totalTime">00:00</div>
-                    <div class="label"><i class="fas fa-clock"></i> Time</div>
-                </div>
-                <div class="stat-card">
-                    <div class="number" id="avgSpeed">0</div>
-                    <div class="label"><i class="fas fa-tachometer-alt"></i> Speed</div>
-                </div>
-            </div>
-
-            <!-- Route Info -->
-            <div class="route-info">
-                <div class="route-info-item">
-                    <span class="label"><i class="fas fa-flag-checkered"></i> Status</span>
-                    <span class="value" id="routeStatus">🟡 Not tracking</span>
-                </div>
-                <div class="route-info-item">
-                    <span class="label"><i class="fas fa-location-dot"></i> Current Location</span>
-                    <span class="value" id="currentLocation">Waiting for GPS...</span>
-                </div>
-                <div class="route-info-item">
-                    <span class="label"><i class="fas fa-clock"></i> Last Update</span>
-                    <span class="value" id="lastUpdate">Never</span>
-                </div>
-                <div class="route-info-item">
-                    <span class="label"><i class="fas fa-arrows-up-down"></i> Points</span>
-                    <span class="value" id="pointCount">0</span>
-                </div>
-            </div>
-
-            <!-- Location Tracking Button -->
-            <div class="tracking-section">
-                <div class="tracking-status">
-                    <div class="tracking-info">
-                        <div class="pulse-dot inactive" id="trackingDot"></div>
-                        <div>
-                            <p style="font-weight:600; color:#1a2a3a; font-size:12px;">Live Location Tracking</p>
-                            <p style="font-size:10px; color:#6b7a8a;" id="trackingStatus">Not tracking</p>
-                        </div>
-                    </div>
-                    <button class="tracking-btn inactive" id="trackingToggle" onclick="toggleTracking()">
-                        <i class="fas fa-play"></i> Start
-                    </button>
-                </div>
-            </div>
-
-            <!-- Location Log -->
-            <h4 style="font-size:11px; color:#1a2a3a; margin:6px 0 4px;">
-                <i class="fas fa-history" style="color:#2563eb;"></i> Route History
-            </h4>
-            <div class="location-log" id="locationLog">
-                <p style="text-align:center; color:#a0b0c0; font-size:10px;">No route data yet</p>
-            </div>
-        </div>
-
-        <div style="margin-top:22px;padding-top:14px;border-top:1px solid var(--lux-border);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;color:#8f86a3;font-size:10px;">
-            <span><i class="fas fa-shield-halved" style="color:var(--lux-gold);margin-right:5px;"></i> JAC Premium Control Center</span>
-            <span>Secure • Live • Professional</span>
-        </div>
-    </div>
-
-    <!-- ==================== VIEW USER MODAL ==================== -->
-    <div class="modal" id="viewUserModal">
-        <div class="modal-content">
-            <div class="page-header">
-                <h3><i class="fas fa-user" style="color:#2563eb;"></i> <span id="viewUserName">User Details</span></h3>
-                <button class="close-btn" onclick="closeViewModal()">✕</button>
-            </div>
-            
-            <!-- User Info -->
-            <div id="viewUserDetails">
-                <div class="profile-detail"><span class="label">Employee ID</span><span class="value" id="viewUserId">-</span></div>
-                <div class="profile-detail"><span class="label">Designation</span><span class="value" id="viewUserDesignation">-</span></div>
-                <div class="profile-detail"><span class="label">Blood Group</span><span class="value" id="viewUserBlood">-</span></div>
-                <div class="profile-detail"><span class="label">Contact</span><span class="value" id="viewUserContact">-</span></div>
-                <div class="profile-detail"><span class="label">Emergency</span><span class="value" id="viewUserEmergency">-</span></div>
-                <div class="profile-detail"><span class="label">Email</span><span class="value" id="viewUserEmail">-</span></div>
-                <div class="profile-detail"><span class="label">Address</span><span class="value" id="viewUserAddress">-</span></div>
-                <div class="profile-detail"><span class="label">Status</span><span class="value" id="viewUserStatus">-</span></div>
-            </div>
-
-            <!-- Current Location -->
-            <div style="margin-top:12px; background:#f0f7ff; border-radius:10px; padding:10px; border:1px solid #dbeafe;">
-                <div style="display:flex; justify-content:space-between; font-size:11px; padding:2px 0;">
-                    <span style="color:#6b7a8a;">Current Location</span>
-                    <span style="font-weight:600; color:#1a2a3a;" id="viewUserCurrentLoc">-</span>
-                </div>
-                <div style="display:flex; justify-content:space-between; font-size:11px; padding:2px 0;">
-                    <span style="color:#6b7a8a;">Last Update</span>
-                    <span style="font-weight:600; color:#1a2a3a;" id="viewUserLastUpdate">-</span>
-                </div>
-            </div>
-
-            <!-- Tracking History -->
-            <div style="margin-top:12px;">
-                <h4 style="font-size:12px; color:#1a2a3a; margin-bottom:6px;">
-                    <i class="fas fa-history" style="color:#2563eb;"></i> Tracking History
-                </h4>
-                <div style="overflow-x:auto;">
-                    <table class="history-table" id="viewUserHistoryTable">
-                        <thead>
-                            <tr>
-                                <th>Location</th>
-                                <th>Time</th>
-                                <th>Stay</th>
-                                <th>Traveling</th>
-                                <th>Waiting</th>
-                            </tr>
-                        </thead>
-                        <tbody id="viewUserHistoryBody">
-                            <tr>
-                                <td colspan="5" style="text-align:center; color:#6b7a8a; padding:15px;">
-                                    <i class="fas fa-spinner fa-spin"></i> Loading history...
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <button class="btn btn-secondary" style="margin-top:10px;" onclick="closeViewModal()">Close</button>
-        </div>
-    </div>
-
-    <!-- ==================== EDIT USER MODAL ==================== -->
-    <div class="modal" id="editUserModal">
-        <div class="modal-content">
-            <div class="page-header">
-                <h3><i class="fas fa-edit" style="color:#f59e0b;"></i> Edit User</h3>
-                <button class="close-btn" onclick="closeEditModal()">✕</button>
-            </div>
-            <form id="editUserForm" onsubmit="return false;">
-                <input type="hidden" id="editUserId">
-                <div class="form-group">
-                    <label>Employee Name</label>
-                    <input type="text" id="editName" required>
-                </div>
-                <div class="form-group">
-                    <label>Designation</label>
-                    <select id="editDesignation">
-                        <option value="Collection">Collection</option>
-                        <option value="Marketing">Marketing</option>
-                        <option value="Officers">Officers</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Employee ID</label>
-                    <input type="text" id="editId" required>
-                </div>
-                <div class="form-group">
-                    <label>Blood Group</label>
-                    <select id="editBlood">
-                        <option value="A+">A+</option>
-                        <option value="A-">A-</option>
-                        <option value="B+">B+</option>
-                        <option value="B-">B-</option>
-                        <option value="AB+">AB+</option>
-                        <option value="AB-">AB-</option>
-                        <option value="O+">O+</option>
-                        <option value="O-">O-</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Contact Number</label>
-                    <input type="tel" id="editContact" required>
-                </div>
-                <div class="form-group">
-                    <label>Emergency Contact</label>
-                    <input type="tel" id="editEmergency" required>
-                </div>
-                <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" id="editEmail" required>
-                </div>
-                <div class="form-group">
-                    <label>Address</label>
-                    <input type="text" id="editAddress">
-                </div>
-                <div style="display:flex; gap:8px; margin-top:10px;">
-                    <button type="submit" class="btn btn-success" onclick="updateUser()">
-                        <i class="fas fa-save"></i> Update
-                    </button>
-                    <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Leaflet JS -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<!-- ====== LOGIN SCREEN ====== -->
+<div id="loginScreen" class="login-overlay hidden">
+  <div class="login-card">
+    <div class="login-logo">🏦</div>
+    <div class="login-title">TRY Accounting</div>
+    <div class="login-sub">Tiruchirappalli Branch - Secure Login</div>
     
-    <script>
-        // ========== GOOGLE SHEETS CONFIGURATION ==========
-        const GOOGLE_SHEETS_URL = 'https://script.google.com/macros/s/YOUR_SCRIPT_ID/exec';
+    <div class="field" style="text-align:left">
+      <label>Username</label>
+      <input type="text" id="loginUser" placeholder="Enter username" onkeypress="if(event.key==='Enter') document.getElementById('loginPass').focus()">
+    </div>
+    <div class="field" style="text-align:left">
+      <label>Password</label>
+      <input type="password" id="loginPass" placeholder="Enter password" onkeypress="if(event.key==='Enter') handleLogin()">
+    </div>
+    
+    <div id="loginError" class="hidden" style="color:var(--red);font-size:12px;margin-bottom:15px;font-weight:600;text-align:left">
+      ❌ Invalid username or password
+    </div>
+    
+    <button class="btn btn-primary" style="width:100%;justify-content:center;padding:12px;font-size:15px" onclick="handleLogin()">Secure Login</button>
+    
+    <div style="margin-top:20px; font-size:11px; color:var(--muted); text-align:left; line-height:1.6; background:#F8FAFC; padding:10px; border-radius:6px; border:1px solid var(--border)">
+      <strong>Test Credentials:</strong><br>
+      Admin: <code>admin</code> / <code>try123</code><br>
+      Accountant: <code>Accountant</code> / <code>Acc@123</code>
+    </div>
+  </div>
+</div>
+
+<!-- ====== MAIN APP ====== -->
+<button class="mobile-menu" onclick="document.querySelector('.sidebar').classList.toggle('open')">☰</button>
+
+<div class="app hidden" id="mainApp">
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-icon">🏦</div>
+      <div class="logo-txt">
+        <h1>TRY Accounting</h1>
+        <p>Tiruchirappalli Branch</p>
+      </div>
+    </div>
+    <nav class="nav">
+      <div class="nav-section" id="sec-overview">Overview</div>
+      <div class="nav-item active" data-page="dashboard"><span class="ic">📊</span>Dashboard</div>
+      
+      <div class="nav-section" id="sec-transactions">Transactions</div>
+      <div class="nav-item" data-page="transaction"><span class="ic">✏️</span>Submit Transaction</div>
+      <div class="nav-item" data-page="route01"><span class="ic">🚌</span>Route 01 Collection</div>
+      <div class="nav-item" data-page="route02"><span class="ic">🚌</span>Route 02 Collection</div>
+      
+      <div class="nav-section" id="sec-books">Books</div>
+      <div class="nav-item" data-page="cashbook"><span class="ic">💵</span>Cash Book</div>
+      <div class="nav-item" data-page="bankbook"><span class="ic">🏦</span>Bank Book</div>
+      
+      <div class="nav-section" id="sec-reports">Reports</div>
+      <div class="nav-item" data-page="dailyreport"><span class="ic">📅</span>Daily Report</div>
+      <div class="nav-item" data-page="monthlyreport"><span class="ic">📈</span>Monthly Report</div>
+      <div class="nav-item" data-page="trialbalance"><span class="ic">⚖️</span>Trial Balance</div>
+      <div class="nav-item" data-page="plsheet"><span class="ic">💹</span>P&L Sheet</div>
+      <div class="nav-item" data-page="balancesheet"><span class="ic">🧾</span>Balance Sheet</div>
+      
+      <div class="nav-section" id="sec-filters">Filters</div>
+      <div class="nav-item" data-page="filterledgers"><span class="ic">🔍</span>Filter Ledgers</div>
+      
+      <div class="nav-section" id="sec-system">System</div>
+      <div class="nav-item" data-page="settings"><span class="ic">⚙️</span>Settings & Imports</div>
+      
+      <div style="margin-top:auto; padding-top:20px;">
+        <div class="nav-item" id="logoutBtn" style="color:#FCA5A5; border:1px solid rgba(239,68,68,0.3); justify-content:center;">
+          <span class="ic">🚪</span> Logout
+        </div>
+      </div>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <div id="pageContent"></div>
+  </main>
+</div>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ===================== AUTHENTICATION & ROLES ===================== */
+const VALID_USERS = [
+  { u: 'admin', p: 'try123', role: 'admin' },
+  { u: 'admin', p: 'mnr123', role: 'admin' },
+  { u: 'admin', p: 'vpt123', role: 'admin' },
+  { u: 'Accountant', p: 'Acc@123', role: 'accountant' }
+];
+
+function handleLogin() {
+  const u = document.getElementById('loginUser').value.trim();
+  const p = document.getElementById('loginPass').value;
+  const err = document.getElementById('loginError');
+
+  const validUser = VALID_USERS.find(x => x.u === u && x.p === p);
+
+  if(validUser) {
+    localStorage.setItem('try_logged_in', 'true');
+    localStorage.setItem('try_user_role', validUser.role);
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('mainApp').classList.remove('hidden');
+    state.role = validUser.role;
+    init(); 
+  } else {
+    err.classList.remove('hidden');
+    document.getElementById('loginPass').value = '';
+  }
+}
+
+function handleLogout() {
+  if(confirm('Are you sure you want to logout?')) {
+    localStorage.removeItem('try_logged_in');
+    localStorage.removeItem('try_user_role');
+    location.reload(); 
+  }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  const isLogged = localStorage.getItem('try_logged_in') === 'true';
+  if(isLogged) {
+    document.getElementById('loginScreen').classList.add('hidden');
+    document.getElementById('mainApp').classList.remove('hidden');
+    state.role = localStorage.getItem('try_user_role') || 'admin';
+    init();
+  } else {
+    document.getElementById('loginScreen').classList.remove('hidden');
+    document.getElementById('mainApp').classList.add('hidden');
+  }
+});
+
+/* ===================== STORAGE ===================== */
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem('try_'+k); return v ? JSON.parse(v) : d; }catch{ return d; } },
+  set(k, v){ localStorage.setItem('try_'+k, JSON.stringify(v)); }
+};
+
+const state = {
+  cashBook: store.get('cashBook', []),
+  bankBook: store.get('bankBook', []),
+  route01: store.get('route01', []),
+  route02: store.get('route02', []),
+  denominations: store.get('denominations', {500:0,200:0,100:0,50:0,20:0,10:0,5:0,2:0,1:0}),
+  opening: store.get('opening', {cash: 0, bank: 0}),
+  bankOpenings: store.get('bankOpenings', {}), 
+  // Your Google Apps Script URL is hardcoded here
+  sheetsUrl: 'https://script.google.com/macros/s/AKfycbwgpt7xl6-zqeBQt4GEJkDACm-tvpmehRuLKN_oifkF_64nOTKqpOsy43hmP5S_iee1/exec',
+  currentPage: 'dashboard',
+  role: 'admin' 
+};
+
+function save(){
+  store.set('cashBook', state.cashBook);
+  store.set('bankBook', state.bankBook);
+  store.set('route01', state.route01);
+  store.set('route02', state.route02);
+  store.set('denominations', state.denominations);
+  store.set('opening', state.opening);
+  store.set('bankOpenings', state.bankOpenings);
+}
+
+/* ===================== UTILS ===================== */
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const fmt = n => '₹' + (Number(n)||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtN = n => (Number(n)||0).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+const todayStr = () => { const d=new Date(); return d.toISOString().slice(0,10); };
+const monthStr = () => { const d=new Date(); return d.toISOString().slice(0,7); };
+const sameDay = (a,b) => a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate();
+const sameMonth = (a,b) => a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth();
+
+function toast(msg, type='success'){
+  const t = $('#toast');
+  t.textContent = msg;
+  t.className = 'toast show ' + type;
+  setTimeout(()=> t.classList.remove('show'), 3000);
+}
+
+function openModal(html){ $('#modalContent').innerHTML = html; $('#modalBg').classList.add('show'); }
+function closeModal(){ $('#modalBg').classList.remove('show'); }
+$('#modalBg').addEventListener('click', e => { if(e.target.id === 'modalBg') closeModal(); });
+
+/* ===================== CSV PARSER ===================== */
+function parseCSV(text){
+  if(!text) return [];
+  if(text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+  const rows = [];
+  let row = [];
+  let field = '';
+  let inQuotes = false;
+  let i = 0;
+  while(i < text.length){
+    const c = text[i];
+    if(inQuotes){
+      if(c === '"'){
+        if(text[i+1] === '"'){ field += '"'; i += 2; continue; }
+        inQuotes = false; i++; continue;
+      }
+      field += c; i++;
+    } else {
+      if(c === '"'){ inQuotes = true; i++; }
+      else if(c === ','){ row.push(field); field = ''; i++; }
+      else if(c === '\n'){ row.push(field); rows.push(row); row = []; field = ''; i++; }
+      else if(c === '\r'){ i++; }
+      else { field += c; i++; }
+    }
+  }
+  if(field !== '' || row.length > 0){ row.push(field); rows.push(row); }
+  return rows.filter(r => r.some(c => String(c).trim() !== ''));
+}
+
+function cleanNum(v){
+  if(v === null || v === undefined) return 0;
+  const s = String(v).replace(/[₹,\s]/g,'').trim();
+  if(!s || s.startsWith('=') || s.startsWith('#')) return 0;
+  const n = Number(s);
+  return isNaN(n) ? 0 : n;
+}
+
+function parseDateSafe(v){
+  if(!v) return null;
+  const s = String(v).trim();
+  if(!s) return null;
+  let d = new Date(s);
+  if(!isNaN(d)) return d;
+  const m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
+  if(m){
+    let dd = +m[1], mm = +m[2], yy = +m[3];
+    if(yy < 100) yy += 2000;
+    d = new Date(yy, mm-1, dd);
+    if(!isNaN(d)) return d;
+  }
+  return null;
+}
+
+function importCashCSV(text){
+  const rows = parseCSV(text);
+  if(rows.length === 0) return 0;
+  let start = 0;
+  if(rows[0][0] && String(rows[0][0]).toLowerCase().includes('date')) start = 1;
+  
+  let runningBal = state.opening.cash;
+  const newEntries = [];
+  
+  for(let i = start; i < rows.length; i++){
+    const r = rows[i];
+    if(r.length < 5) continue;
+    const date = parseDateSafe(String(r[0] || '').trim());
+    if(!date) continue;
+    
+    const type = String(r[1] || '').trim();
+    const particular = String(r[2] || '').trim();
+    const recAmt = cleanNum(r[3]);
+    const payAmt = cleanNum(r[4]);
+    const ledger = String(r[5] || '').trim();
+    const mode = String(r[6] || '').trim() || 'Cash';
+    
+    if(particular.toLowerCase().includes('opening balance') || ledger.toLowerCase() === 'opening balance'){
+      if(recAmt > 0){ runningBal = recAmt; state.opening.cash = recAmt; }
+      continue;
+    }
+    if(!type && recAmt === 0 && payAmt === 0) continue;
+    
+    runningBal = runningBal + recAmt - payAmt;
+    newEntries.push({ date: date.toISOString(), type: type || (recAmt > 0 ? 'Receipt' : 'Payment'), particular, recAmt, payAmt, ledger, mode, balance: runningBal });
+  }
+  if(newEntries.length > 0){ state.cashBook = newEntries; save(); }
+  return newEntries.length;
+}
+
+function importBankCSV(text){
+  const rows = parseCSV(text);
+  if(rows.length === 0) return 0;
+  let start = 0;
+  if(rows[0][0] && String(rows[0][0]).toLowerCase().includes('date')) start = 1;
+  
+  let runningBal = state.opening.bank;
+  const newEntries = [];
+  const openings = {};
+  
+  for(let i = start; i < rows.length; i++){
+    const r = rows[i];
+    if(r.length < 5) continue;
+    
+    const dateStr = String(r[0] || '').trim();
+    const type = String(r[1] || '').trim();
+    const particular = String(r[2] || '').trim();
+    const recAmt = cleanNum(r[3]);
+    const payAmt = cleanNum(r[4]);
+    const ledger = String(r[5] || '').trim();
+    const mode = String(r[6] || '').trim() || 'Bank';
+    const accName = String(r[7] || '').trim();
+    
+    if(!dateStr && type.toLowerCase() === 'opening'){
+       if(particular){
+           openings[particular] = recAmt;
+       }
+       continue;
+    }
+    
+    const date = parseDateSafe(dateStr);
+    if(!date) continue;
+    
+    if(particular.toLowerCase().includes('opening balance') || ledger.toLowerCase() === 'opening balance'){
+      if(recAmt > 0){ runningBal = recAmt; state.opening.bank = recAmt; }
+      continue;
+    }
+    
+    if(!type && recAmt === 0 && payAmt === 0) continue;
+    
+    runningBal = runningBal + recAmt - payAmt;
+    newEntries.push({ date: date.toISOString(), type: type || (recAmt > 0 ? 'Receipt' : 'Payment'), particular, recAmt, payAmt, ledger, mode, accName, balance: runningBal });
+  }
+  
+  state.bankOpenings = openings;
+  if(newEntries.length > 0){ state.bankBook = newEntries; }
+  save();
+  return newEntries.length;
+}
+
+function importRouteCSV(text, routeName){
+  const rows = parseCSV(text);
+  if(rows.length === 0) return 0;
+  let start = 0;
+  if(rows[0][0] && String(rows[0][0]).toLowerCase().includes('txn')) start = 1;
+  
+  const entries = [];
+  for(let i = start; i < rows.length; i++){
+    const r = rows[i];
+    if(r.length < 6) continue;
+    entries.push({
+      txnId: String(r[0]||'').trim(), 
+      date: String(r[1]||'').trim(), 
+      custId: String(r[2]||'').trim(),
+      name: String(r[3]||'').trim(), 
+      group: String(r[4]||'').trim(), 
+      type: String(r[5]||'').trim(), 
+      amount: cleanNum(r[6]),
+      mop: String(r[7]||'').trim() 
+    });
+  }
+  if(routeName === 'Route 01') state.route01 = entries;
+  else state.route02 = entries;
+  save();
+  return entries.length;
+}
+
+/* ===================== BUSINESS LOGIC ===================== */
+function submitTransaction(data){
+  const {type, ledger, mode, accName, amount, desc, date, denom} = data;
+  if(!type || !mode || !amount){ toast('Fill Type, Mode, Amount', 'error'); return; }
+  const recAmt = type === 'Receipt' ? Number(amount) : 0;
+  const payAmt = type === 'Payment' ? Number(amount) : 0;
+  const d = date ? new Date(date) : new Date();
+
+  if(mode === 'Cash'){
+    const lastBal = state.cashBook.length ? state.cashBook[state.cashBook.length-1].balance : state.opening.cash;
+    state.cashBook.push({date: d.toISOString(), type, particular: desc, recAmt, payAmt, ledger, mode, balance: lastBal + recAmt - payAmt});
+    if(denom){
+      for(const v of [500,200,100,50,20,10,5,2,1]){
+        const c = Number(denom[v]) || 0;
+        if(type === 'Receipt') state.denominations[v] += c;
+        else if(type === 'Payment') state.denominations[v] -= c;
+      }
+    }
+  } else {
+    const lastBal = state.bankBook.length ? state.bankBook[state.bankBook.length-1].balance : state.opening.bank;
+    state.bankBook.push({date: d.toISOString(), type, particular: desc, recAmt, payAmt, ledger, mode, accName, balance: lastBal + recAmt - payAmt});
+  }
+  save();
+  toast('✅ Transaction saved & tallies updated!');
+  goTo('transaction');
+}
+
+function getLedgerList(){
+  const set = new Set();
+  state.cashBook.forEach(r => { const h = String(r.ledger||'').trim(); if(h && h.toLowerCase()!=='opening balance') set.add(h); });
+  state.bankBook.forEach(r => { const h = String(r.ledger||'').trim(); if(h && h.toLowerCase()!=='opening balance') set.add(h); });
+  return ['ALL', ...Array.from(set).sort()];
+}
+
+function filterLedgerTransactions(ledger, fromDate, toDate){
+  const results = [];
+  let totRec = 0, totPay = 0;
+  const from = fromDate ? new Date(fromDate+'T00:00:00') : null;
+  const to = toDate ? new Date(toDate+'T23:59:59') : null;
+  const match = (led, dt) => {
+    const okL = !ledger || ledger==='ALL' || String(led).toLowerCase()===ledger.toLowerCase();
+    return okL && (!from || dt >= from) && (!to || dt <= to);
+  };
+  state.cashBook.forEach(r => { const d = new Date(r.date); if(!match(r.ledger, d)) return; results.push({...r, acc:'Cash'}); totRec += Number(r.recAmt)||0; totPay += Number(r.payAmt)||0; });
+  state.bankBook.forEach(r => { const d = new Date(r.date); if(!match(r.ledger, d)) return; results.push({...r, acc: r.accName||'Bank'}); totRec += Number(r.recAmt)||0; totPay += Number(r.payAmt)||0; });
+  results.sort((a,b)=> new Date(a.date)-new Date(b.date));
+  return {results, totRec, totPay};
+}
+
+function generateMasterFinancialStatements(){
+  const tbMap = {};
+  const process = arr => arr.forEach(r => {
+    const h = String(r.ledger||'').trim();
+    if(!h) return;
+    if(!tbMap[h]) tbMap[h] = {dr:0, cr:0};
+    tbMap[h].cr += Number(r.recAmt)||0;
+    tbMap[h].dr += Number(r.payAmt)||0;
+  });
+  process(state.cashBook); process(state.bankBook);
+  const trialBalance = Object.entries(tbMap).map(([h,v])=>({head:h, dr:v.dr, cr:v.cr}));
+  
+  const exp = {}, inc = {};
+  let totExp = 0, totInc = 0;
+  const processPL = arr => arr.forEach(r => {
+    const h = String(r.ledger||'').trim();
+    if(!h || h.toLowerCase().includes('opening balance') || h.toLowerCase().includes('cash & bank')) return;
+    if(Number(r.payAmt) > 0){ exp[h] = (exp[h]||0)+Number(r.payAmt); totExp += Number(r.payAmt); }
+    if(Number(r.recAmt) > 0){ inc[h] = (inc[h]||0)+Number(r.recAmt); totInc += Number(r.recAmt); }
+  });
+  processPL(state.cashBook); processPL(state.bankBook);
+  const netPL = totInc - totExp;
+  
+  const cashBal = state.cashBook.length ? state.cashBook[state.cashBook.length-1].balance : state.opening.cash;
+  const bankBal = state.bankBook.length ? state.bankBook[state.bankBook.length-1].balance : state.opening.bank;
+  
+  // FIX: Capital = Opening Cash + Opening Bank
+  const capital = state.opening.cash + state.opening.bank;
+  const capitalPlusPL = capital + (netPL > 0 ? netPL : 0);
+  
+  return {
+    trialBalance,
+    pl: {exp: Object.entries(exp).map(([h,v])=>({head:h, amt:v})), inc: Object.entries(inc).map(([h,v])=>({head:h, amt:v})), totExp, totInc, netPL},
+    bs: {cashBal, bankBal, capital, capitalPlusPL, totAssets: cashBal+bankBal, netPL}
+  };
+}
+
+function deleteBookEntry(kind, actualIndex) {
+  if(state.role !== 'accountant') {
+    toast('Only Accountant has permission to delete', 'error');
+    return;
+  }
+  if(!confirm('Are you sure you want to delete this transaction?')) return;
+  if(kind === 'Cash') {
+    state.cashBook.splice(actualIndex, 1);
+    let bal = state.opening.cash;
+    state.cashBook.forEach(r => {
+      bal += (Number(r.recAmt)||0) - (Number(r.payAmt)||0);
+      r.balance = bal;
+    });
+  } else {
+    state.bankBook.splice(actualIndex, 1);
+    let bal = state.opening.bank;
+    state.bankBook.forEach(r => {
+      bal += (Number(r.recAmt)||0) - (Number(r.payAmt)||0);
+      r.balance = bal;
+    });
+  }
+  save();
+  render();
+  toast('Transaction deleted successfully', 'success');
+}
+
+/* ===================== ROLE BASED ACCESS CONTROL ===================== */
+function applyRoleUI() {
+  $$('.nav-item').forEach(n => {
+    const page = n.dataset.page;
+    if (!page) return;
+    
+    let show = true;
+    if (state.role === 'admin') {
+       if (['settings', 'trialbalance', 'plsheet', 'balancesheet'].includes(page)) show = false;
+    }
+    n.style.display = show ? 'flex' : 'none';
+  });
+
+  $$('.nav-section').forEach(sec => {
+      let next = sec.nextElementSibling;
+      let hasVisible = false;
+      while (next && !next.classList.contains('nav-section')) {
+          if (next.style.display !== 'none' && next.id !== 'logoutBtn') hasVisible = true;
+          next = next.nextElementSibling;
+      }
+      sec.style.display = hasVisible ? 'block' : 'none';
+  });
+}
+
+function goTo(page){ 
+  if (state.role === 'admin' && ['settings', 'trialbalance', 'plsheet', 'balancesheet'].includes(page)) {
+      toast('Access denied for Admin', 'error');
+      return;
+  }
+  state.currentPage = page; 
+  render(); 
+}
+
+function render(){
+  applyRoleUI();
+  $$('.nav-item').forEach(n => {
+    if(n.dataset.page) n.classList.toggle('active', n.dataset.page === state.currentPage);
+  });
+  const el = $('#pageContent');
+  
+  const isAllowed = $$('.nav-item').some(n => n.dataset.page === state.currentPage && n.style.display !== 'none');
+  if(!isAllowed && state.currentPage !== 'dashboard') {
+     state.currentPage = 'dashboard';
+  }
+
+  switch(state.currentPage){
+    case 'dashboard': el.innerHTML = renderDashboard(); break;
+    case 'transaction': el.innerHTML = renderTransactionPage(); break;
+    case 'route01': el.innerHTML = renderRoutePage('Route 01'); break;
+    case 'route02': el.innerHTML = renderRoutePage('Route 02'); break;
+    case 'cashbook': el.innerHTML = renderBook('Cash'); break;
+    case 'bankbook': el.innerHTML = renderBook('Bank'); break;
+    case 'dailyreport': el.innerHTML = renderDailyReport(); break;
+    case 'monthlyreport': el.innerHTML = renderMonthlyReport(); break;
+    case 'trialbalance': el.innerHTML = renderTrialBalance(); break;
+    case 'plsheet': el.innerHTML = renderPL(); break;
+    case 'balancesheet': el.innerHTML = renderBalanceSheet(); break;
+    case 'filterledgers': el.innerHTML = renderFilterLedgers(); break;
+    case 'settings': el.innerHTML = renderSettings(); break;
+  }
+  attachHandlers();
+}
+
+function header(title, sub, showExport=false){
+  return `<div class="topbar">
+    <div><div class="page-title">${title}</div><div class="page-sub">${sub}</div></div>
+    ${showExport ? `
+      <div class="no-print" style="display:flex;gap:8px">
+        <button class="btn" onclick="window.print()" style="border:1px solid var(--primary);color:var(--primary)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><path d="M6 14h12v8H6z"/></svg> PDF
+        </button>
+        <button class="btn" onclick="exportDailyReportCSV()" style="border:1px solid var(--green);color:var(--green)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg> Excel
+        </button>
+      </div>
+    ` : ''}
+  </div>`;
+}
+
+/* -------- Dashboard -------- */
+function renderDashboard(){
+  const cashBal = state.cashBook.length ? state.cashBook[state.cashBook.length-1].balance : state.opening.cash;
+  const bankBal = state.bankBook.length ? state.bankBook[state.bankBook.length-1].balance : state.opening.bank;
+  const master = generateMasterFinancialStatements();
+  const totRec = state.cashBook.reduce((a,r)=>a+(Number(r.recAmt)||0),0) + state.bankBook.reduce((a,r)=>a+(Number(r.recAmt)||0),0);
+  const totPay = state.cashBook.reduce((a,r)=>a+(Number(r.payAmt)||0),0) + state.bankBook.reduce((a,r)=>a+(Number(r.payAmt)||0),0);
+  const denomTot = Object.entries(state.denominations).reduce((a,[v,c]) => a + Number(v)*Number(c), 0);
+  const recent = [...state.cashBook.map(r=>({...r,mode:r.mode||'Cash'})), ...state.bankBook.map(r=>({...r,mode:r.mode||'Bank'}))]
+    .sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,8);
+  
+  return `
+    ${header('Dashboard','Live financial overview')}
+    <div class="grid grid-4">
+      <div class="stat"><div class="stat-label">💵 Cash Balance</div><div class="stat-val">${fmt(cashBal)}</div><div class="stat-sub">${state.cashBook.length} transactions</div></div>
+      <div class="stat"><div class="stat-label">🏦 Bank Balance</div><div class="stat-val">${fmt(bankBal)}</div><div class="stat-sub">${state.bankBook.length} transactions</div></div>
+      <div class="stat"><div class="stat-label">📥 Total Receipts</div><div class="stat-val green">${fmt(totRec)}</div><div class="stat-sub">Across all accounts</div></div>
+      <div class="stat"><div class="stat-label">📤 Total Payments</div><div class="stat-val red">${fmt(totPay)}</div><div class="stat-sub">Across all accounts</div></div>
+    </div>
+    <div class="grid grid-2" style="margin-top:16px">
+      <div class="card card-highlight">
+        <div class="stat-label">🧾 Net Worth (Capital + P&L)</div>
+        <div class="stat-val ${master.bs.netPL>=0?'green':'red'}" style="margin-top:12px">${fmt(master.bs.capitalPlusPL)}</div>
+        <div class="stat-sub">Capital ${fmt(master.bs.capital)} | P&L ${fmt(master.bs.netPL)}</div>
+      </div>
+      <div class="card card-highlight">
+        <div class="stat-label">🪙 Denomination Tally</div>
+        <div class="stat-val" style="margin-top:12px">${fmt(denomTot)}</div>
+        <div class="stat-sub">${Math.abs(cashBal - denomTot) < 0.01 ? '✅ Tallied with Cash Book' : '⚠️ Difference: ' + fmt(Math.abs(cashBal - denomTot))}</div>
+      </div>
+    </div>
+    <div class="grid grid-2" style="margin-top:16px">
+      <div class="card">
+        <div class="section-title">💵 Cash Denomination</div>
+        ${[500,200,100,50,20,10,5,2,1].map(v => `<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid #F1F5F9;font-size:13px"><span style="color:var(--muted)">₹${v} × ${state.denominations[v]||0}</span><span style="color:var(--navy);font-weight:600">${fmt(v*(state.denominations[v]||0))}</span></div>`).join('')}
+      </div>
+      <div class="card">
+        <div class="section-title">📋 Recent Transactions</div>
+        ${recent.length ? recent.map(r => `
+          <div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #F1F5F9;font-size:12.5px;gap:8px">
+            <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text)">${String(r.particular||'-')}</span>
+            <span class="chip ${r.mode==='Cash'?'chip-cash':'chip-bank'}">${r.mode}</span>
+            <span class="${r.type==='Receipt'?'green-txt':'red-txt'}" style="min-width:90px;text-align:right">${r.type==='Receipt'?'+':'-'}${fmt(r.type==='Receipt'?r.recAmt:r.payAmt)}</span>
+          </div>`).join('') : '<div class="empty"><div class="ic">📭</div>No transactions yet</div>'}
+      </div>
+    </div>
+  `;
+}
+
+/* -------- Transaction -------- */
+function renderTransactionPage(){
+  const ledgers = getLedgerList().filter(l=>l!=='ALL');
+  return `
+    ${header('Submit Transaction','Add a new receipt or payment')}
+    <div class="card" style="max-width:720px">
+      <div class="field-row">
+        <div class="field"><label>Transaction Type</label>
+          <select id="txType"><option value="Receipt">Receipt</option><option value="Payment">Payment</option></select></div>
+        <div class="field"><label>Transaction Mode</label>
+          <select id="txMode"><option value="Cash">Cash</option><option value="Bank">Bank</option></select></div>
+      </div>
+      <div class="field"><label>Ledger Head</label>
+        <select id="txLedger">${ledgers.map(l=>`<option value="${l}">${l}</option>`).join('')}</select></div>
+      
+      <div class="field hidden" id="accWrap"><label>Bank Account</label>
+        <select id="txAcc">
+          <option>Current AC</option><option>Ashok sir AC KVB</option><option>Mani SBI</option>
+          <option>Dhanapal sir Axis AC</option><option>Mani KVB</option><option>Ashok sir AC Gpay</option><option>Dhanapal sir AC</option>
+        </select></div>
+
+      <div class="field-row">
+        <div class="field"><label>Amount (₹)</label><input type="number" id="txAmount" step="0.01" placeholder="0.00" oninput="onTxAmountChange()"></div>
+        <div class="field"><label>Date</label><input type="date" id="txDate" value="${todayStr()}"></div>
+      </div>
+
+      <!-- Automatic Cash Denomination Section -->
+      <div id="cashDenomSection" class="hidden" style="margin-top:16px;background:#F8FAFC;padding:16px;border-radius:10px;border:1px solid var(--border)">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+            <div style="font-size:12px;font-weight:700;color:var(--navy)">CASH DENOMINATION (Auto-calculated)</div>
+            <div style="font-size:11px;color:var(--muted)">You can edit if needed</div>
+        </div>
+        <div class="grid grid-2" style="gap:8px">
+            ${[500,200,100,50,20,10,5,2,1].map(v=>`
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;">
+                    <span style="font-size:12px;color:var(--muted);width:50px">₹${v}</span>
+                    <input type="number" min="0" id="denom_${v}" style="width:70px;padding:6px;border:1px solid var(--border);border-radius:6px;text-align:right;font-size:12px" placeholder="0" oninput="updateInlineDenomTotal()">
+                    <span style="font-size:12px;color:var(--navy);font-weight:600;width:70px;text-align:right" id="denomAmt_${v}">₹0.00</span>
+                </div>
+            `).join('')}
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:13px;font-weight:700">
+            <span>Total Denomination:</span>
+            <span id="inlineDenomTotal" style="color:var(--primary)">₹0.00</span>
+        </div>
+      </div>
+
+      <div class="field" style="margin-top:16px"><label>Description</label><input type="text" id="txDesc" placeholder="Particular"></div>
+      
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">
+        <button class="btn btn-primary" id="btnSubmitTx">Submit Transaction</button>
+        <button class="btn" onclick="goTo('transaction')">Clear</button>
+      </div>
+    </div>
+  `;
+}
+
+/* -------- Route Page -------- */
+function renderRoutePage(routeName){
+  const route = routeName === 'Route 01' ? state.route01 : state.route02;
+  const fromKey = routeName === 'Route 01' ? '_route01From' : '_route02From';
+  const toKey = routeName === 'Route 01' ? '_route01To' : '_route02To';
+  const fromVal = state[fromKey] || '';
+  const toVal = state[toKey] || '';
+
+  let filteredRoute = route.filter(r => {
+    if(!r.date) return true;
+    const d = parseDateSafe(r.date);
+    if(!d) return true;
+    if (fromVal && d < new Date(fromVal + 'T00:00:00')) return false;
+    if (toVal && d > new Date(toVal + 'T23:59:59')) return false;
+    return true;
+  });
+
+  const isCash = (r) => {
+      const mode = (r.mop || r.type || '').toLowerCase();
+      return mode === 'cash';
+  };
+  
+  const cashTotal = filteredRoute.filter(isCash).reduce((a,r) => a + (Number(r.amount)||0), 0);
+  const allTotal = filteredRoute.reduce((a,r) => a + (Number(r.amount)||0), 0);
+  
+  return `
+    ${header(routeName + ' Collection', 'Upload route data and verify cash denomination')}
+    
+    <div class="card" style="margin-bottom:16px">
+      <div class="filter-bar">
+        <div class="field"><label>From Date</label><input type="date" id="routeFrom" value="${fromVal}"></div>
+        <div class="field"><label>To Date</label><input type="date" id="routeTo" value="${toVal}"></div>
+        <button class="btn btn-primary" id="btnRouteFilter" data-route="${routeName}">Apply Filter</button>
+        <button class="btn btn-red" id="btnRouteClear" data-route="${routeName}">Clear Data</button>
+      </div>
+    </div>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <div class="section-title">📁 Upload Route Data</div>
+        <label class="upload-zone" for="routeUpload">
+          <div class="up-icon">📄</div>
+          <div class="up-text">Click to upload CSV</div>
+          <div class="up-sub">Columns: TxnID, Date, CustomerID, Name, Group, Type, Amount, MOP</div>
+          <input type="file" id="routeUpload" accept=".csv">
+        </label>
+        <div class="upload-info">💡 Export ${routeName} sheet from Excel/Sheets as CSV</div>
+      </div>
+      
+      <div class="card card-highlight">
+        <div class="section-title">💰 Current Data</div>
+        <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #F1F5F9"><span style="color:var(--muted)">Total Entries</span><strong>${filteredRoute.length}</strong></div>
+        <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #F1F5F9"><span style="color:var(--muted)">Cash Total</span><strong class="green-txt">${fmt(cashTotal)}</strong></div>
+        <div style="display:flex;justify-content:space-between;padding:10px 0"><span style="color:var(--muted)">All Total</span><strong>${fmt(allTotal)}</strong></div>
+        <button class="btn btn-primary" style="margin-top:14px;width:100%;justify-content:center" id="addRouteBtn" data-route="${routeName}" ${cashTotal === 0 ? 'disabled' : ''}>
+          💵 Add Route Collection
+        </button>
+        ${cashTotal === 0 ? '<div style="font-size:11.5px;color:var(--muted);margin-top:8px;text-align:center">Upload route data or adjust filter to enable this button</div>' : ''}
+      </div>
+    </div>
+    
+    ${filteredRoute.length ? `
+      <div class="card" style="margin-top:16px">
+        <div class="section-title">📋 ${routeName} Entries (${filteredRoute.length})</div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Date</th><th>Customer ID</th><th>Name</th><th>Group</th><th>Type / MOP</th><th class="num">Amount</th></tr></thead>
+          <tbody>
+            ${filteredRoute.slice(0, 150).map(r => `<tr>
+              <td>${r.date || '-'}</td>
+              <td>${r.custId || '-'}</td>
+              <td>${r.name || '-'}</td>
+              <td>${r.group || '-'}</td>
+              <td><span class="chip ${isCash(r)?'chip-cash':'chip-bank'}">${r.mop || r.type || '-'}</span></td>
+              <td class="num">${fmtN(r.amount)}</td>
+            </tr>`).join('')}
+            ${filteredRoute.length > 150 ? `<tr><td colspan="6" style="text-align:center;color:var(--muted)">... showing first 150 of ${filteredRoute.length} entries</td></tr>` : ''}
+          </tbody>
+        </table></div>
+      </div>
+    ` : ''}
+  `;
+}
+
+/* -------- Book -------- */
+function renderBook(kind){
+  const isCash = kind === 'Cash';
+  const book = isCash ? state.cashBook : state.bankBook;
+  const fromKey = isCash ? '_cashFrom' : '_bankFrom';
+  const toKey = isCash ? '_cashTo' : '_bankTo';
+  const fromVal = state[fromKey] || '';
+  const toVal = state[toKey] || '';
+  
+  const accKey = '_bankAcc';
+  const accVal = state[accKey] || 'ALL';
+
+  let uniqueAccs = ['ALL'];
+  if(!isCash) {
+     const accsSet = new Set();
+     book.forEach(r => { if(r.accName) accsSet.add(r.accName); });
+     if(state.bankOpenings) Object.keys(state.bankOpenings).forEach(a => accsSet.add(a));
+     uniqueAccs = uniqueAccs.concat(Array.from(accsSet).sort());
+  }
+
+  let filteredBook = book.filter(r => {
+    const d = new Date(r.date);
+    if (fromVal && d < new Date(fromVal + 'T00:00:00')) return false;
+    if (toVal && d > new Date(toVal + 'T23:59:59')) return false;
+    if (!isCash && accVal !== 'ALL' && r.accName !== accVal) return false;
+    return true;
+  });
+
+  const totRec = filteredBook.reduce((a,r)=>a+(Number(r.recAmt)||0),0);
+  const totPay = filteredBook.reduce((a,r)=>a+(Number(r.payAmt)||0),0);
+  
+  let closingBal;
+  if(isCash) {
+      closingBal = filteredBook.length ? filteredBook[filteredBook.length-1].balance : state.opening.cash;
+  } else {
+      if(accVal === 'ALL') {
+          closingBal = filteredBook.length ? filteredBook[filteredBook.length-1].balance : state.opening.bank;
+      } else {
+          let accBal = (state.bankOpenings && state.bankOpenings[accVal]) ? state.bankOpenings[accVal] : 0;
+          book.forEach(r => {
+              if (r.accName === accVal) {
+                  const d = new Date(r.date);
+                  if (!toVal || d <= new Date(toVal + 'T23:59:59')) {
+                      accBal += (Number(r.recAmt)||0) - (Number(r.payAmt)||0);
+                  }
+              }
+          });
+          closingBal = accBal;
+      }
+  }
+
+  const showDelete = state.role === 'accountant';
+  const colSpan = (isCash ? 8 : 9) + (showDelete ? 1 : 0);
+
+  return `
+    ${header(kind + ' Book', 'Ledger with running balance')}
+    
+    <div class="card" style="margin-bottom:16px">
+      <div class="filter-bar">
+        <div class="field"><label>From Date</label><input type="date" id="bookFrom" value="${fromVal}"></div>
+        <div class="field"><label>To Date</label><input type="date" id="bookTo" value="${toVal}"></div>
+        ${!isCash ? `
+        <div class="field">
+          <label>Account Filter</label>
+          <select id="bookAcc">
+            ${uniqueAccs.map(a => `<option value="${a}" ${a === accVal ? 'selected' : ''}>${a}</option>`).join('')}
+          </select>
+        </div>
+        ` : ''}
+        <button class="btn btn-primary" id="btnBookFilter" data-kind="${kind}">Apply Filter</button>
+        <button class="btn" id="btnBookClear" data-kind="${kind}">Clear</button>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <div class="filter-bar">
+        <div class="field"><label>Filtered Records</label><input type="text" value="${filteredBook.length}" readonly></div>
+        <div class="field"><label>Total Received</label><input type="text" value="${fmt(totRec)}" readonly></div>
+        <div class="field"><label>Total Payment</label><input type="text" value="${fmt(totPay)}" readonly></div>
+        <div class="field"><label>Closing Balance</label><input type="text" value="${fmt(closingBal)}" readonly></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="table-wrap"><table>
+        <thead><tr>
+          <th>Date</th><th>Type</th><th>Particular</th><th class="num">Received</th><th class="num">Payment</th>
+          <th>Ledger</th><th>Mode</th>${isCash?'':'<th>Account</th>'}<th class="num">Balance</th>${showDelete ? '<th>Action</th>' : ''}
+        </tr></thead>
+        <tbody>
+          ${filteredBook.length ? filteredBook.map(r=>{
+            const actualIndex = book.indexOf(r);
+            return `<tr>
+            <td>${new Date(r.date).toLocaleDateString('en-IN')}</td>
+            <td><span class="chip ${r.type==='Receipt'?'chip-receipt':'chip-payment'}">${r.type}</span></td>
+            <td>${r.particular||'-'}</td>
+            <td class="num green-txt">${r.recAmt?fmtN(r.recAmt):'-'}</td>
+            <td class="num red-txt">${r.payAmt?fmtN(r.payAmt):'-'}</td>
+            <td>${r.ledger||'-'}</td><td>${r.mode||'-'}</td>${isCash?'':`<td>${r.accName||'-'}</td>`}
+            <td class="num">${fmtN(r.balance)}</td>
+            ${showDelete ? `<td><button class="btn btn-sm btn-red" onclick="deleteBookEntry('${kind}', ${actualIndex})" title="Delete Entry">🗑️</button></td>` : ''}
+          </tr>`}).join('') : `<tr><td colspan="${colSpan}"><div class="empty"><div class="ic">📒</div>No transactions match the filter.</div></td></tr>`}
+        </tbody>
+      </table></div>
+    </div>
+  `;
+}
+
+/* -------- Daily Report -------- */
+function renderDailyReport(){
+  const date = state._dailyDate || todayStr();
+  const target = new Date(date);
+  target.setHours(23,59,59,999);
+  
+  const txs = [];
+  state.cashBook.forEach(r => { if(sameDay(new Date(r.date), target)) txs.push({...r, acc:'Cash'}); });
+  state.bankBook.forEach(r => { if(sameDay(new Date(r.date), target)) txs.push({...r, acc: r.accName||'Bank'}); });
+  txs.sort((a,b)=>new Date(a.date)-new Date(b.date));
+  
+  let openCash = state.opening.cash;
+  for(const r of state.cashBook){ if(new Date(r.date) >= target) break; openCash = r.balance; }
+  let openBank = state.opening.bank;
+  for(const r of state.bankBook){ if(new Date(r.date) >= target) break; openBank = r.balance; }
+  const opening = openCash + openBank;
+  
+  const dayRec = txs.reduce((a,r)=>a+(Number(r.recAmt)||0),0);
+  const dayPay = txs.reduce((a,r)=>a+(Number(r.payAmt)||0),0);
+  
+  let closeCash = openCash;
+  for(const r of state.cashBook){ if(new Date(r.date) <= target) closeCash = r.balance; }
+  let closeBank = openBank;
+  for(const r of state.bankBook){ if(new Date(r.date) <= target) closeBank = r.balance; }
+  
+  const bankAccs = ['Current AC', 'Ashok sir AC KVB', 'Mani SBI', 'Dhanapal sir Axis AC', 'Mani KVB', 'Ashok sir AC Gpay', 'Dhanapal sir AC'];
+  const accBalances = {};
+  
+  if (state.bankOpenings) {
+      Object.keys(state.bankOpenings).forEach(acc => {
+          accBalances[acc] = state.bankOpenings[acc];
+      });
+  }
+  bankAccs.forEach(acc => {
+      if (accBalances[acc] === undefined) accBalances[acc] = 0;
+  });
+
+  state.bankBook.forEach(r => {
+    if(new Date(r.date) <= target){
+      const acc = r.accName || 'Mani SBI';
+      if(accBalances[acc] === undefined) accBalances[acc] = 0;
+      accBalances[acc] += (Number(r.recAmt)||0) - (Number(r.payAmt)||0);
+    }
+  });
+  
+  const getRouteTotal = (routeData) => {
+    return routeData.filter(r => {
+      if(!r.date) return false;
+      const d = parseDateSafe(r.date);
+      return d && sameDay(d, target);
+    }).reduce((a, r) => a + (Number(r.amount)||0), 0);
+  };
+  const r1Total = getRouteTotal(state.route01);
+  const r2Total = getRouteTotal(state.route02);
+  
+  const denomTotal = Object.entries(state.denominations).reduce((a,[v,c]) => a + Number(v)*Number(c), 0);
+  
+  return `
+    ${header('Daily Report','Date-wise transactions & closing balances', true)}
+    
+    <div class="print-only" style="text-align:center;margin-bottom:20px">
+      <h2>TRY Accounting - Daily Report</h2>
+      <p>Date: ${new Date(date).toLocaleDateString('en-IN')}</p>
+      <hr style="margin:10px 0">
+    </div>
+
+    <div class="card no-print" style="margin-bottom:16px">
+      <div class="filter-bar">
+        <div class="field" style="max-width:220px"><label>Select Date</label><input type="date" id="drDate" value="${date}"></div>
+        <button class="btn btn-primary" id="drLoad">Load Report</button>
+      </div>
+    </div>
+
+    <div class="grid grid-4" style="margin-bottom:16px">
+      <div class="stat"><div class="stat-label">Opening Balance</div><div class="stat-val">${fmt(opening)}</div></div>
+      <div class="stat"><div class="stat-label">Day Receipts</div><div class="stat-val green">${fmt(dayRec)}</div></div>
+      <div class="stat"><div class="stat-label">Day Payments</div><div class="stat-val red">${fmt(dayPay)}</div></div>
+      <div class="stat"><div class="stat-label">Total Closing</div><div class="stat-val" style="color:var(--primary)">${fmt(closeCash + closeBank)}</div></div>
+    </div>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <div class="section-title">💰 Closing Balances (Split)</div>
+        <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #F1F5F9;font-size:14px">
+          <span style="font-weight:600">Cash Closing Balance</span>
+          <span style="font-weight:700;color:var(--green)">${fmt(closeCash)}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #F1F5F9;font-size:14px">
+          <span style="font-weight:600">Bank Closing Balance</span>
+          <span style="font-weight:700;color:var(--primary)">${fmt(closeBank)}</span>
+        </div>
         
-        // ========== GLOBAL VARIABLES ==========
-        let currentUser = null;
-        let allEmployees = JSON.parse(localStorage.getItem('jac_employees')) || [];
-        let map, marker, polyline, routePath = [];
-        let trackingActive = false;
-        let watchId = null;
-        let startTime = null;
-        let totalDistance = 0;
-        let locationHistory = [];
-        let routePoints = [];
-        let lastLocation = null;
-        let locationTimestamps = [];
-
-        // ========== DASHBOARD NAVIGATION ==========
-        function goToDashboard() {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.getElementById('dashboardMenu').style.display = 'block';
-            document.getElementById('headerMenu').style.display = 'none';
-            document.getElementById('headerSubtext').textContent = 'Dashboard';
-            document.querySelectorAll('.dashboard-card').forEach(c => c.classList.remove('active'));
-            refreshUsers();
-        }
-
-        function switchPage(page) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.getElementById(page + 'Page').classList.add('active');
-            document.getElementById('dashboardMenu').style.display = 'none';
-            
-            document.querySelectorAll('.dashboard-card').forEach(c => c.classList.remove('active'));
-            
-            if (page === 'master') {
-                document.querySelector('.dashboard-card:nth-child(1)').classList.add('active');
-                document.getElementById('headerSubtext').textContent = 'Registration';
-                document.getElementById('headerMenu').style.display = 'none';
-            } else if (page === 'users') {
-                document.querySelector('.dashboard-card:nth-child(2)').classList.add('active');
-                document.getElementById('headerSubtext').textContent = 'Users Details';
-                document.getElementById('headerMenu').style.display = 'none';
-                refreshUsers();
-            } else if (page === 'login') {
-                document.querySelector('.dashboard-card:nth-child(3)').classList.add('active');
-                document.getElementById('headerSubtext').textContent = 'Login';
-                document.getElementById('headerMenu').style.display = 'none';
-            } else if (page === 'tracking') {
-                document.querySelector('.dashboard-card:nth-child(4)').classList.add('active');
-                document.getElementById('headerSubtext').textContent = 'Live Tracking';
-                document.getElementById('headerMenu').style.display = 'flex';
-                
-                if (!currentUser) {
-                    showNotification('Please login first', 'error');
-                    setTimeout(() => switchPage('login'), 1000);
-                    return;
-                }
-                
-                loadUserProfile(currentUser);
-                checkLocationPermission();
-                setTimeout(initMap, 300);
-            }
-        }
-
-        // ========== USERS PAGE ==========
-        function refreshUsers() {
-            allEmployees = JSON.parse(localStorage.getItem('jac_employees')) || [];
-            document.getElementById('userCountBadge').textContent = allEmployees.length;
-            renderUsers(allEmployees);
-        }
-
-        function renderUsers(users) {
-            const tbody = document.getElementById('usersTableBody');
-            if (!users || users.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="7" style="text-align:center; color:#6b7a8a; padding:20px;">
-                            <i class="fas fa-users"></i> No users found
-                        </td>
-                    </tr>
-                `;
-                document.getElementById('totalUsersDisplay').textContent = '0';
-                return;
-            }
-
-            let html = '';
-            users.forEach((user, index) => {
-                const isTracking = user.isTracking || false;
-                const statusText = isTracking ? '🟢 Tracking' : '🟡 Not tracking';
-                const statusClass = isTracking ? 'tracking' : 'not-tracking';
-                
-                html += `
-                    <tr>
-                        <td>${index + 1}</td>
-                        <td><strong>${user.id || '-'}</strong></td>
-                        <td>${user.name || '-'}</td>
-                        <td>${user.designation || '-'}</td>
-                        <td>
-                            <span class="status-dot ${statusClass}"></span>
-                            ${statusText}
-                        </td>
-                        <td>
-                            <button class="btn btn-primary btn-xs" onclick="viewUser('${user.username}')">
-                                <i class="fas fa-eye"></i> View
-                            </button>
-                        </td>
-                        <td>
-                            <div class="action-btns">
-                                <button class="btn btn-warning btn-xs" onclick="editUser('${user.username}')">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="btn btn-danger btn-xs" onclick="deleteUser('${user.username}')">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-            });
-
-            tbody.innerHTML = html;
-            document.getElementById('totalUsersDisplay').textContent = users.length;
-        }
-
-        function filterUsers() {
-            const search = document.getElementById('searchUser').value.toLowerCase().trim();
-            if (!search) {
-                renderUsers(allEmployees);
-                return;
-            }
-            const filtered = allEmployees.filter(u => 
-                u.name.toLowerCase().includes(search) || 
-                u.id.toLowerCase().includes(search) ||
-                u.designation.toLowerCase().includes(search)
-            );
-            renderUsers(filtered);
-        }
-
-        // ========== VIEW USER ==========
-        function viewUser(username) {
-            const user = allEmployees.find(u => u.username === username);
-            if (!user) {
-                showNotification('User not found', 'error');
-                return;
-            }
-
-            // Set user info
-            document.getElementById('viewUserName').textContent = user.name;
-            document.getElementById('viewUserId').textContent = user.id || '-';
-            document.getElementById('viewUserDesignation').textContent = user.designation || '-';
-            document.getElementById('viewUserBlood').textContent = user.blood || '-';
-            document.getElementById('viewUserContact').textContent = user.contact || '-';
-            document.getElementById('viewUserEmergency').textContent = user.emergency || '-';
-            document.getElementById('viewUserEmail').textContent = user.email || '-';
-            document.getElementById('viewUserAddress').textContent = user.address || '-';
-            document.getElementById('viewUserStatus').textContent = user.isTracking ? '🟢 Tracking' : '🟡 Not tracking';
-            
-            // Set current location
-            const userHistory = JSON.parse(localStorage.getItem('jac_user_history_' + username)) || [];
-            if (userHistory.length > 0) {
-                const last = userHistory[userHistory.length - 1];
-                document.getElementById('viewUserCurrentLoc').textContent = 
-                    `${last.lat.toFixed(6)}, ${last.lng.toFixed(6)} (${last.accuracy || 0}m)`;
-                document.getElementById('viewUserLastUpdate').textContent = last.time || 'Never';
-            } else {
-                document.getElementById('viewUserCurrentLoc').textContent = 'No data';
-                document.getElementById('viewUserLastUpdate').textContent = 'Never';
-            }
-            
-            // Show tracking history
-            renderUserHistory(userHistory, username);
-            
-            document.getElementById('viewUserModal').classList.add('show');
-        }
-
-        function renderUserHistory(history, username) {
-            const tbody = document.getElementById('viewUserHistoryBody');
-            
-            if (!history || history.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="5" style="text-align:center; color:#6b7a8a; padding:15px;">
-                            <i class="fas fa-info-circle"></i> No tracking history
-                        </td>
-                    </tr>
-                `;
-                return;
-            }
-
-            // Calculate stay times
-            let html = '';
-            let lastTime = null;
-            let lastLat = null;
-            let lastLng = null;
-            let isTraveling = false;
-            let travelStartTime = null;
-
-            for (let i = 0; i < history.length; i++) {
-                const entry = history[i];
-                const currentTime = new Date(entry.time).getTime();
-                
-                let stayTime = '-';
-                let travelingTime = '-';
-                let waitingTime = '-';
-                let status = 'stopped';
-
-                if (i > 0) {
-                    const prevTime = new Date(history[i-1].time).getTime();
-                    const diffMinutes = Math.round((currentTime - prevTime) / 60000);
-                    
-                    if (diffMinutes > 5) {
-                        // Stay time calculated
-                        stayTime = diffMinutes + ' min';
-                        status = 'stopped';
-                    } else {
-                        // Traveling
-                        const lat1 = history[i-1].lat;
-                        const lng1 = history[i-1].lng;
-                        const lat2 = entry.lat;
-                        const lng2 = entry.lng;
-                        const dist = calculateDistance(lat1, lng1, lat2, lng2);
-                        
-                        if (dist > 10) { // More than 10 meters - traveling
-                            travelingTime = '🚗 Traveling';
-                            status = 'traveling';
-                            isTraveling = true;
-                            if (!travelStartTime) travelStartTime = history[i-1].time;
-                        } else {
-                            waitingTime = diffMinutes + ' min';
-                            status = 'waiting';
-                        }
-                    }
-                }
-
-                const statusBadge = status === 'traveling' ? 'traveling' : 
-                                   status === 'waiting' ? 'waiting' : 'stopped';
-                const statusLabel = status === 'traveling' ? '🚗 Traveling' :
-                                   status === 'waiting' ? '⏳ Waiting' : '📍 Stopped';
-
-                html += `
-                    <tr>
-                        <td>${entry.lat.toFixed(6)}, ${entry.lng.toFixed(6)}</td>
-                        <td>${entry.time || '-'}</td>
-                        <td>${stayTime}</td>
-                        <td><span class="status-badge ${statusBadge}">${travelingTime}</span></td>
-                        <td>${waitingTime}</td>
-                    </tr>
-                `;
-            }
-
-            tbody.innerHTML = html;
-        }
-
-        function closeViewModal() {
-            document.getElementById('viewUserModal').classList.remove('show');
-        }
-
-        // ========== EDIT USER ==========
-        function editUser(username) {
-            const user = allEmployees.find(u => u.username === username);
-            if (!user) {
-                showNotification('User not found', 'error');
-                return;
-            }
-
-            document.getElementById('editUserId').value = username;
-            document.getElementById('editName').value = user.name || '';
-            document.getElementById('editDesignation').value = user.designation || 'Collection';
-            document.getElementById('editId').value = user.id || '';
-            document.getElementById('editBlood').value = user.blood || 'A+';
-            document.getElementById('editContact').value = user.contact || '';
-            document.getElementById('editEmergency').value = user.emergency || '';
-            document.getElementById('editEmail').value = user.email || '';
-            document.getElementById('editAddress').value = user.address || '';
-            
-            document.getElementById('editUserModal').classList.add('show');
-        }
-
-        function closeEditModal() {
-            document.getElementById('editUserModal').classList.remove('show');
-        }
-
-        function updateUser() {
-            const username = document.getElementById('editUserId').value;
-            const userIndex = allEmployees.findIndex(u => u.username === username);
-            
-            if (userIndex === -1) {
-                showNotification('User not found', 'error');
-                return;
-            }
-
-            const updatedUser = {
-                ...allEmployees[userIndex],
-                name: document.getElementById('editName').value.trim(),
-                designation: document.getElementById('editDesignation').value,
-                id: document.getElementById('editId').value.trim(),
-                blood: document.getElementById('editBlood').value,
-                contact: document.getElementById('editContact').value.trim(),
-                emergency: document.getElementById('editEmergency').value.trim(),
-                email: document.getElementById('editEmail').value.trim(),
-                address: document.getElementById('editAddress').value.trim()
-            };
-
-            allEmployees[userIndex] = updatedUser;
-            localStorage.setItem('jac_employees', JSON.stringify(allEmployees));
-            
-            closeEditModal();
-            refreshUsers();
-            showNotification('✅ User updated successfully!', 'success');
-        }
-
-        // ========== DELETE USER ==========
-        function deleteUser(username) {
-            if (!confirm(`Are you sure you want to delete user: ${username}?`)) {
-                return;
-            }
-
-            allEmployees = allEmployees.filter(u => u.username !== username);
-            localStorage.setItem('jac_employees', JSON.stringify(allEmployees));
-            
-            // Also delete user history
-            localStorage.removeItem('jac_user_history_' + username);
-            
-            if (currentUser && currentUser.username === username) {
-                currentUser = null;
-                localStorage.removeItem('jac_current_user');
-                document.getElementById('trackingBadge').textContent = 'Live';
-            }
-            
-            refreshUsers();
-            showNotification('🗑️ User deleted successfully', 'success');
-        }
-
-        // ========== MASTER PAGE ==========
-        function nextStep() {
-            const name = document.getElementById('empName').value.trim();
-            const designation = document.getElementById('empDesignation').value;
-            const id = document.getElementById('empId').value.trim();
-            const blood = document.getElementById('empBlood').value;
-            const contact = document.getElementById('empContact').value.trim();
-            const emergency = document.getElementById('empEmergency').value.trim();
-            const email = document.getElementById('empEmail').value.trim();
-
-            if (!name || !designation || !id || !blood || !contact || !emergency || !email) {
-                showNotification('Please fill all required fields', 'error');
-                return;
-            }
-
-            document.getElementById('credentialsSection').style.display = 'block';
-            document.getElementById('credentialsSection').scrollIntoView({ behavior: 'smooth' });
-            showNotification('Fill credentials below', 'success');
-        }
-
-        function submitRegistration() {
-            const name = document.getElementById('empName').value.trim();
-            const designation = document.getElementById('empDesignation').value;
-            const id = document.getElementById('empId').value.trim();
-            const blood = document.getElementById('empBlood').value;
-            const contact = document.getElementById('empContact').value.trim();
-            const emergency = document.getElementById('empEmergency').value.trim();
-            const email = document.getElementById('empEmail').value.trim();
-            const address = document.getElementById('empAddress').value.trim();
-            const username = document.getElementById('empUsername').value.trim();
-            const password = document.getElementById('empPassword').value;
-            const confirmPassword = document.getElementById('empConfirmPassword').value;
-
-            if (!name || !designation || !id || !blood || !contact || !emergency || !email || !username || !password || !confirmPassword) {
-                showNotification('Please fill all fields', 'error');
-                return;
-            }
-
-            if (password.length < 6) {
-                showNotification('Password must be at least 6 characters', 'error');
-                return;
-            }
-
-            if (password !== confirmPassword) {
-                showNotification('Passwords do not match', 'error');
-                return;
-            }
-
-            if (allEmployees.some(emp => emp.username === username)) {
-                showNotification('Username already taken!', 'error');
-                return;
-            }
-
-            const employee = {
-                name, designation, id, blood, contact, emergency, email, address,
-                username, password,
-                isTracking: false,
-                createdAt: new Date().toISOString()
-            };
-
-            allEmployees.push(employee);
-            localStorage.setItem('jac_employees', JSON.stringify(allEmployees));
-
-            saveToGoogleSheets(employee);
-
-            showNotification('✅ Employee registered successfully!', 'success');
-            document.getElementById('masterForm').reset();
-            document.getElementById('credentialsSection').style.display = 'none';
-            document.getElementById('userCountBadge').textContent = allEmployees.length;
-
-            setTimeout(() => {
-                switchPage('users');
-                refreshUsers();
-            }, 1500);
-        }
-
-        // ========== LOGIN PAGE ==========
-        function loginUser() {
-            const username = document.getElementById('loginUsername').value.trim();
-            const password = document.getElementById('loginPassword').value.trim();
-
-            if (!username || !password) {
-                showNotification('Please enter username and password', 'error');
-                return;
-            }
-
-            const user = allEmployees.find(emp => emp.username === username && emp.password === password);
-            
-            if (!user) {
-                showNotification('❌ Invalid username or password', 'error');
-                return;
-            }
-
-            currentUser = user;
-            localStorage.setItem('jac_current_user', JSON.stringify(user));
-            document.getElementById('trackingBadge').textContent = '✓ Logged In';
-            document.getElementById('trackingBadge').className = 'badge success';
-            
-            showNotification(`✅ Welcome, ${user.name}!`, 'success');
-            switchPage('tracking');
-        }
-
-        // ========== TRACKING PAGE ==========
-        function loadUserProfile(user) {
-            if (!user) return;
-            document.getElementById('profileAvatar').textContent = user.name.split(' ').map(n => n[0]).join('').toUpperCase();
-            document.getElementById('profileName').textContent = user.name;
-            document.getElementById('profileRole').textContent = user.designation;
-            document.getElementById('profileId').textContent = user.id || '-';
-            document.getElementById('profileBlood').textContent = user.blood || '-';
-            document.getElementById('profileContact').textContent = user.contact || '-';
-            document.getElementById('profileEmergency').textContent = user.emergency || '-';
-            document.getElementById('profileEmail').textContent = user.email || '-';
-            document.getElementById('profileAddress').textContent = user.address || '-';
-        }
-
-        function checkLocationPermission() {
-            if (navigator.geolocation) {
-                navigator.permissions.query({ name: 'geolocation' }).then(result => {
-                    if (result.state === 'granted') {
-                        document.getElementById('locationPermission').style.display = 'none';
-                    } else {
-                        document.getElementById('locationPermission').style.display = 'block';
-                    }
-                });
-            }
-        }
-
-        function requestLocation() {
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        document.getElementById('locationPermission').style.display = 'none';
-                        showNotification('📍 Location access granted!', 'success');
-                        const pos = [position.coords.latitude, position.coords.longitude];
-                        if (map) {
-                            map.setView(pos, 16);
-                            marker.setLatLng(pos);
-                        }
-                    },
-                    (error) => {
-                        showNotification('❌ Location access denied', 'error');
-                    }
-                );
-            }
-        }
-
-        // ========== MAP INIT ==========
-        function initMap() {
-            const defaultLocation = [11.0168, 76.9558];
-            
-            if (!document.getElementById('map')) return;
-            if (map) {
-                map.invalidateSize();
-                return;
-            }
-
-            map = L.map('map').setView(defaultLocation, 15);
-            
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '© OpenStreetMap',
-                maxZoom: 19
-            }).addTo(map);
-
-            const icon = L.divIcon({
-                html: '<div style="background:#2563eb; width:18px; height:18px; border-radius:50%; border:3px solid white; box-shadow:0 2px 10px rgba(0,0,0,0.3);"></div>',
-                iconSize: [18, 18],
-                iconAnchor: [9, 9]
-            });
-
-            marker = L.marker(defaultLocation, { icon: icon }).addTo(map);
-
-            polyline = L.polyline([], {
-                color: '#2563eb',
-                weight: 4,
-                opacity: 0.8
-            }).addTo(map);
-
-            loadSavedRoute();
-
-            if (navigator.geolocation) {
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        const pos = [position.coords.latitude, position.coords.longitude];
-                        map.setView(pos, 16);
-                        marker.setLatLng(pos);
-                        document.getElementById('currentLocation').textContent = 
-                            `${pos[0].toFixed(6)}, ${pos[1].toFixed(6)}`;
-                        document.getElementById('currentLocationDisplay').textContent = 
-                            `${pos[0].toFixed(6)}, ${pos[1].toFixed(6)}`;
-                    },
-                    () => {}
-                );
-            }
-        }
-
-        function loadSavedRoute() {
-            const savedPath = localStorage.getItem('jac_route_path');
-            if (savedPath) {
-                try {
-                    routePath = JSON.parse(savedPath);
-                    routePoints = routePath.map(p => [p.lat, p.lng]);
-                    if (routePoints.length > 0) {
-                        polyline.setLatLngs(routePoints);
-                        document.getElementById('pointCount').textContent = routePath.length;
-                    }
-                } catch (e) {}
-            }
-
-            const savedDistance = localStorage.getItem('jac_total_distance');
-            if (savedDistance) {
-                totalDistance = parseFloat(savedDistance);
-                document.getElementById('totalDistance').textContent = (totalDistance / 1000).toFixed(2);
-            }
-
-            const savedHistory = localStorage.getItem('jac_route_history');
-            if (savedHistory) {
-                try {
-                    locationHistory = JSON.parse(savedHistory);
-                    updateLocationLog();
-                } catch (e) {}
-            }
-        }
-
-        // ========== TRACKING FUNCTIONS ==========
-        function toggleTracking() {
-            if (!currentUser) {
-                showNotification('Please login first', 'error');
-                return;
-            }
-            
-            if (trackingActive) {
-                stopTracking();
-            } else {
-                startTracking();
-            }
-        }
-
-        function startTracking() {
-            if (!navigator.geolocation) {
-                showNotification('❌ Geolocation not supported', 'error');
-                return;
-            }
-
-            if (routePath.length === 0) {
-                routePath = [];
-                routePoints = [];
-                totalDistance = 0;
-                locationHistory = [];
-                polyline.setLatLngs([]);
-            }
-
-            startTime = new Date();
-            trackingActive = true;
-            
-            // Update user status
-            if (currentUser) {
-                const userIndex = allEmployees.findIndex(u => u.username === currentUser.username);
-                if (userIndex !== -1) {
-                    allEmployees[userIndex].isTracking = true;
-                    localStorage.setItem('jac_employees', JSON.stringify(allEmployees));
-                }
-            }
-            
-            document.getElementById('trackingToggle').innerHTML = '<i class="fas fa-stop"></i> Stop';
-            document.getElementById('trackingToggle').className = 'tracking-btn active';
-            document.getElementById('trackingStatus').textContent = '🟢 Live tracking active';
-            document.getElementById('routeStatus').textContent = '🟢 Tracking...';
-            document.getElementById('routeStatus').style.color = '#22c55e';
-            document.getElementById('trackingDot').className = 'pulse-dot';
-
-            watchId = navigator.geolocation.watchPosition(
-                (position) => {
-                    const lat = position.coords.latitude;
-                    const lng = position.coords.longitude;
-                    const accuracy = position.coords.accuracy;
-                    const timestamp = new Date().toLocaleString();
-                    const coord = { lat, lng };
-
-                    // Update displays
-                    const locationText = `${lat.toFixed(6)}, ${lng.toFixed(6)} (${Math.round(accuracy)}m)`;
-                    document.getElementById('currentLocation').textContent = locationText;
-                    document.getElementById('currentLocationDisplay').textContent = locationText;
-                    document.getElementById('lastUpdate').textContent = timestamp;
-                    document.getElementById('lastUpdateDisplay').textContent = timestamp;
-
-                    const pos = [lat, lng];
-                    map.setView(pos, 16);
-                    marker.setLatLng(pos);
-
-                    routePath.push(coord);
-                    routePoints.push(pos);
-                    
-                    if (routePath.length > 1) {
-                        const prev = routePath[routePath.length - 2];
-                        const dist = calculateDistance(prev.lat, prev.lng, lat, lng);
-                        totalDistance += dist;
-                    }
-
-                    polyline.setLatLngs(routePoints);
-                    updateStats();
-
-                    const entry = { 
-                        lat, lng, 
-                        time: timestamp,
-                        accuracy: Math.round(accuracy),
-                        distance: (totalDistance / 1000).toFixed(2)
-                    };
-                    locationHistory.push(entry);
-                    updateLocationLog();
-
-                    // Save user-specific history
-                    const userHistoryKey = 'jac_user_history_' + currentUser.username;
-                    const userHistory = JSON.parse(localStorage.getItem(userHistoryKey)) || [];
-                    userHistory.push(entry);
-                    localStorage.setItem(userHistoryKey, JSON.stringify(userHistory));
-
-                    localStorage.setItem('jac_route_history', JSON.stringify(locationHistory));
-                    localStorage.setItem('jac_route_path', JSON.stringify(routePath));
-                    localStorage.setItem('jac_total_distance', totalDistance);
-
-                    document.getElementById('pointCount').textContent = routePath.length;
-
-                    saveLocationToSheets({
-                        name: currentUser ? currentUser.name : 'User',
-                        id: currentUser ? currentUser.id : 'N/A',
-                        latitude: lat,
-                        longitude: lng,
-                        time: timestamp,
-                        distance: (totalDistance / 1000).toFixed(2)
-                    });
-
-                    if (routePath.length === 1) {
-                        showNotification('📍 Tracking started!', 'success');
-                        refreshUsers();
-                    }
-                },
-                (error) => {
-                    showNotification('⚠️ GPS error', 'error');
-                },
-                { enableHighAccuracy: true, maximumAge: 5000, timeout: 30000 }
-            );
-        }
-
-        function stopTracking() {
-            if (watchId) {
-                navigator.geolocation.clearWatch(watchId);
-                watchId = null;
-            }
-            trackingActive = false;
-            
-            // Update user status
-            if (currentUser) {
-                const userIndex = allEmployees.findIndex(u => u.username === currentUser.username);
-                if (userIndex !== -1) {
-                    allEmployees[userIndex].isTracking = false;
-                    localStorage.setItem('jac_employees', JSON.stringify(allEmployees));
-                }
-            }
-            
-            document.getElementById('trackingToggle').innerHTML = '<i class="fas fa-play"></i> Start';
-            document.getElementById('trackingToggle').className = 'tracking-btn inactive';
-            document.getElementById('trackingStatus').textContent = '⏸️ Tracking stopped';
-            document.getElementById('routeStatus').textContent = '⏹️ Tracking stopped';
-            document.getElementById('routeStatus').style.color = '#dc2626';
-            document.getElementById('trackingDot').className = 'pulse-dot inactive';
-            
-            showNotification(`⏹️ Route stopped - ${routePath.length} points`, 'success');
-            refreshUsers();
-        }
-
-        function calculateDistance(lat1, lon1, lat2, lon2) {
-            const R = 6371000;
-            const dLat = (lat2 - lat1) * Math.PI / 180;
-            const dLon = (lon2 - lon1) * Math.PI / 180;
-            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-                Math.sin(dLon/2) * Math.sin(dLon/2);
-            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        }
-
-        function updateStats() {
-            const distanceKm = (totalDistance / 1000).toFixed(2);
-            document.getElementById('totalDistance').textContent = distanceKm;
-
-            if (startTime) {
-                const elapsed = Math.floor((new Date() - startTime) / 1000);
-                const minutes = Math.floor(elapsed / 60);
-                const seconds = elapsed % 60;
-                document.getElementById('totalTime').textContent = 
-                    `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-                
-                if (elapsed > 0 && totalDistance > 0) {
-                    const speed = (totalDistance / 1000) / (elapsed / 3600);
-                    document.getElementById('avgSpeed').textContent = speed.toFixed(1);
-                }
-            }
-        }
-
-        function updateLocationLog() {
-            const logEl = document.getElementById('locationLog');
-            if (locationHistory.length === 0) {
-                logEl.innerHTML = '<p style="text-align:center; color:#a0b0c0; font-size:10px;">No route data yet</p>';
-                return;
-            }
-
-            const recent = locationHistory.slice(-15).reverse();
-            logEl.innerHTML = recent.map(entry => 
-                `<div class="log-entry">
-                    <span class="coords">📍 ${entry.lat.toFixed(6)}, ${entry.lng.toFixed(6)}</span>
-                    <span class="time">${entry.time}</span>
-                </div>`
-            ).join('');
-        }
-
-        function showProfile() {
-            document.getElementById('profileCard').scrollIntoView({ behavior: 'smooth' });
-        }
-
-        // ========== GOOGLE SHEETS INTEGRATION ==========
-        function saveToGoogleSheets(data) {
-            const sheetData = JSON.parse(localStorage.getItem('jac_sheet_data')) || [];
-            sheetData.push({ ...data, type: 'registration', timestamp: new Date().toISOString() });
-            localStorage.setItem('jac_sheet_data', JSON.stringify(sheetData));
-            
-            fetch(GOOGLE_SHEETS_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    action: 'register',
-                    data: data 
-                })
-            }).catch(() => {
-                console.log('Google Sheets: Data saved locally');
-            });
-        }
-
-        function saveLocationToSheets(data) {
-            fetch(GOOGLE_SHEETS_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    action: 'location',
-                    data: data 
-                })
-            }).catch(() => {
-                console.log('Google Sheets: Location saved locally');
-            });
-        }
-
-        // ========== LOGOUT ==========
-        function logoutUser() {
-            if (confirm('Are you sure you want to logout?')) {
-                if (watchId) {
-                    navigator.geolocation.clearWatch(watchId);
-                    watchId = null;
-                }
-                trackingActive = false;
-                
-                if (currentUser) {
-                    const userIndex = allEmployees.findIndex(u => u.username === currentUser.username);
-                    if (userIndex !== -1) {
-                        allEmployees[userIndex].isTracking = false;
-                        localStorage.setItem('jac_employees', JSON.stringify(allEmployees));
-                    }
-                }
-                
-                currentUser = null;
-                localStorage.removeItem('jac_current_user');
-                document.getElementById('trackingBadge').textContent = 'Live';
-                document.getElementById('trackingBadge').className = 'badge';
-                showNotification('👋 Logged out successfully', 'success');
-                setTimeout(goToDashboard, 500);
-            }
-        }
-
-        // ========== NOTIFICATION ==========
-        function showNotification(message, type = 'success') {
-            const notif = document.getElementById('notification');
-            notif.textContent = message;
-            notif.className = 'notification show';
-            if (type === 'error') notif.classList.add('error');
-            clearTimeout(notif._timeout);
-            notif._timeout = setTimeout(() => notif.classList.remove('show'), 3000);
-        }
-
-        // ========== INIT ==========
-        (function init() {
-            const savedUser = localStorage.getItem('jac_current_user');
-            if (savedUser) {
-                try {
-                    currentUser = JSON.parse(savedUser);
-                    document.getElementById('trackingBadge').textContent = '✓ Logged In';
-                    document.getElementById('trackingBadge').className = 'badge success';
-                    
-                    const userData = allEmployees.find(u => u.username === currentUser.username);
-                    if (userData && userData.isTracking) {
-                        document.getElementById('trackingBadge').textContent = '🟢 Tracking';
-                        document.getElementById('trackingBadge').className = 'badge success';
-                    }
-                } catch (e) {}
-            }
-
-            refreshUsers();
-            console.log('🏢 JAC Dashboard v4.0');
-            console.log('📋 Registered Employees:', allEmployees.length);
-            console.log('👤 Current User:', currentUser ? currentUser.name : 'Not logged in');
-        })();
-
-        document.addEventListener('visibilitychange', () => {
-            if (!document.hidden && map) {
-                setTimeout(() => map.invalidateSize(), 300);
-            }
+        <div style="margin-top:16px">
+          <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:8px">Bank Accounts Breakdown</div>
+          ${Object.entries(accBalances).map(([acc, bal]) => `
+            <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #F1F5F9;font-size:12px">
+              <span style="color:var(--muted)">${acc}</span>
+              <span style="font-weight:600">${fmt(bal)}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">🚌 Collections & Denominations</div>
+        
+        <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #F1F5F9;font-size:14px">
+          <span style="font-weight:600">Route 01 Today</span>
+          <span style="font-weight:700;color:var(--orange)">${fmt(r1Total)}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #F1F5F9;font-size:14px;margin-bottom:16px">
+          <span style="font-weight:600">Route 02 Today</span>
+          <span style="font-weight:700;color:var(--orange)">${fmt(r2Total)}</span>
+        </div>
+
+        <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:8px">Cash Denomination Tally</div>
+        <div class="grid grid-2" style="gap:4px">
+          ${[500,200,100,50,20,10,5,2,1].map(v => `
+            <div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px">
+              <span style="color:var(--muted)">₹${v} × ${state.denominations[v]||0}</span>
+              <span style="font-weight:600">${fmt(v*(state.denominations[v]||0))}</span>
+            </div>
+          `).join('')}
+        </div>
+        <div style="display:flex;justify-content:space-between;margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:13px;font-weight:700">
+          <span>Total Denomination:</span>
+          <span style="color:var(--primary)">${fmt(denomTotal)}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">📋 Transactions (${txs.length})</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Date</th><th>Type</th><th>Particular</th><th class="num">In</th><th class="num">Out</th><th>Ledger</th><th>Mode</th><th>Account</th><th class="num">Balance</th></tr></thead>
+        <tbody>
+          ${txs.length ? txs.map(r=>`<tr>
+            <td>${new Date(r.date).toLocaleDateString('en-IN')}</td>
+            <td><span class="chip ${r.type==='Receipt'?'chip-receipt':'chip-payment'}">${r.type}</span></td>
+            <td>${r.particular||'-'}</td>
+            <td class="num green-txt">${r.recAmt?fmtN(r.recAmt):'-'}</td>
+            <td class="num red-txt">${r.payAmt?fmtN(r.payAmt):'-'}</td>
+            <td>${r.ledger||'-'}</td><td>${r.mode||'-'}</td><td>${r.acc||'-'}</td>
+            <td class="num">${fmtN(r.balance)}</td>
+          </tr>`).join('') : '<tr><td colspan="9"><div class="empty"><div class="ic">📅</div>No transactions</div></td></tr>'}
+        </tbody>
+      </table></div>
+    </div>
+  `;
+}
+
+/* -------- Monthly Report -------- */
+function renderMonthlyReport(){
+  const m = state._monthlyMonth || monthStr();
+  const [yy, mm] = m.split('-').map(Number);
+  const targetMonth = new Date(yy, mm-1, 1);
+  
+  const cashTxs = state.cashBook.filter(r => sameMonth(new Date(r.date), targetMonth));
+  const bankTxs = state.bankBook.filter(r => sameMonth(new Date(r.date), targetMonth));
+  
+  let openingCash = state.opening.cash, openingBank = state.opening.bank;
+  state.cashBook.forEach(r => { if(new Date(r.date) < targetMonth) openingCash = r.balance; });
+  state.bankBook.forEach(r => { if(new Date(r.date) < targetMonth) openingBank = r.balance; });
+  const opening = openingCash + openingBank;
+  
+  const allTxs = [...cashTxs.map(r=>({...r, acc:'Cash'})), ...bankTxs.map(r=>({...r, acc:r.accName||'Bank'}))];
+  allTxs.sort((a,b)=> new Date(a.date)-new Date(b.date));
+  
+  const cashRec = cashTxs.reduce((a,r)=>a+(Number(r.recAmt)||0),0);
+  const cashPay = cashTxs.reduce((a,r)=>a+(Number(r.payAmt)||0),0);
+  const bankRec = bankTxs.reduce((a,r)=>a+(Number(r.recAmt)||0),0);
+  const bankPay = bankTxs.reduce((a,r)=>a+(Number(r.payAmt)||0),0);
+  const totRec = cashRec + bankRec, totPay = cashPay + bankPay;
+  const closing = opening + totRec - totPay;
+  
+  const ledgerMap = {};
+  allTxs.forEach(r => { const h = String(r.ledger||'Unassigned').trim(); if(!ledgerMap[h]) ledgerMap[h] = {dr:0, cr:0}; ledgerMap[h].cr += Number(r.recAmt)||0; ledgerMap[h].dr += Number(r.payAmt)||0; });
+  
+  const expMap = {}, incMap = {};
+  let totExp = 0, totInc = 0;
+  allTxs.forEach(r => { const h = String(r.ledger||'').trim(); if(!h || h.toLowerCase().includes('opening') || h.toLowerCase().includes('cash & bank')) return;
+    if(Number(r.payAmt)>0){ expMap[h] = (expMap[h]||0)+Number(r.payAmt); totExp += Number(r.payAmt); }
+    if(Number(r.recAmt)>0){ incMap[h] = (incMap[h]||0)+Number(r.recAmt); totInc += Number(r.recAmt); }
+  });
+  const netPL = totInc - totExp;
+  
+  return `
+    ${header('Monthly Report','Monthly financial statement')}
+    <div class="card" style="margin-bottom:16px">
+      <div class="filter-bar">
+        <div class="field" style="max-width:220px"><label>Select Month</label><input type="month" id="mrMonth" value="${m}"></div>
+        <button class="btn btn-primary" id="mrLoad">Load Report</button>
+      </div>
+    </div>
+    
+    <div class="grid grid-4" style="margin-bottom:16px">
+      <div class="stat"><div class="stat-label">Opening</div><div class="stat-val">${fmt(opening)}</div></div>
+      <div class="stat"><div class="stat-label">Receipts</div><div class="stat-val green">${fmt(totRec)}</div></div>
+      <div class="stat"><div class="stat-label">Payments</div><div class="stat-val red">${fmt(totPay)}</div></div>
+      <div class="stat"><div class="stat-label">Closing</div><div class="stat-val">${fmt(closing)}</div></div>
+    </div>
+    
+    <div class="card" style="margin-bottom:16px">
+      <div class="section-title">📋 Transactions (${allTxs.length})</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Date</th><th>Type</th><th>Particular</th><th class="num">In</th><th class="num">Out</th><th>Ledger</th><th>Mode</th><th>Account</th><th class="num">Balance</th></tr></thead>
+        <tbody>
+          ${allTxs.length ? allTxs.slice(0, 200).map(r=>`<tr>
+            <td>${new Date(r.date).toLocaleDateString('en-IN')}</td>
+            <td><span class="chip ${r.type==='Receipt'?'chip-receipt':'chip-payment'}">${r.type}</span></td>
+            <td>${r.particular||'-'}</td>
+            <td class="num green-txt">${r.recAmt?fmtN(r.recAmt):'-'}</td>
+            <td class="num red-txt">${r.payAmt?fmtN(r.payAmt):'-'}</td>
+            <td>${r.ledger||'-'}</td><td>${r.mode||'-'}</td><td>${r.acc||'-'}</td>
+            <td class="num">${fmtN(r.balance)}</td>
+          </tr>`).join('') : '<tr><td colspan="9"><div class="empty">No transactions this month</div></td></tr>'}
+        </tbody>
+      </table></div>
+    </div>
+    
+    <div class="grid grid-2">
+      <div class="card">
+        <div class="section-title">⚖️ Trial Balance</div>
+        <div class="table-wrap"><table><thead><tr><th>Ledger</th><th class="num">Debit</th><th class="num">Credit</th></tr></thead>
+        <tbody>
+          ${Object.entries(ledgerMap).map(([h,v])=>`<tr><td>${h}</td><td class="num red-txt">${v.dr?fmtN(v.dr):'-'}</td><td class="num green-txt">${v.cr?fmtN(v.cr):'-'}</td></tr>`).join('')}
+          <tr class="total-row"><td>TOTAL</td><td class="num">${fmtN(Object.values(ledgerMap).reduce((a,v)=>a+v.dr,0))}</td><td class="num">${fmtN(Object.values(ledgerMap).reduce((a,v)=>a+v.cr,0))}</td></tr>
+        </tbody></table></div>
+      </div>
+      <div class="card">
+        <div class="section-title">💹 P&L Statement</div>
+        <div class="grid grid-2" style="gap:12px">
+          <div>
+            <div style="font-size:11px;color:var(--muted);font-weight:700;margin-bottom:8px">EXPENSES</div>
+            ${Object.entries(expMap).map(([h,v])=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #F1F5F9;font-size:12px"><span>${h}</span><span class="red-txt">${fmtN(v)}</span></div>`).join('') || '<div style="padding:14px;color:var(--muted)">None</div>'}
+          </div>
+          <div>
+            <div style="font-size:11px;color:var(--muted);font-weight:700;margin-bottom:8px">INCOME</div>
+            ${Object.entries(incMap).map(([h,v])=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #F1F5F9;font-size:12px"><span>${h}</span><span class="green-txt">${fmtN(v)}</span></div>`).join('') || '<div style="padding:14px;color:var(--muted)">None</div>'}
+          </div>
+        </div>
+        <div style="margin-top:14px;padding:14px;background:${netPL>=0?'var(--green-bg)':'var(--red-bg)'};border-radius:8px;display:flex;justify-content:space-between;font-weight:700">
+          <span>${netPL>=0?'NET PROFIT':'NET LOSS'}</span>
+          <span class="${netPL>=0?'green-txt':'red-txt'}">${fmt(Math.abs(netPL))}</span>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/* -------- Trial Balance -------- */
+function renderTrialBalance(){
+  const master = generateMasterFinancialStatements();
+  const totDr = master.trialBalance.reduce((a,r)=>a+r.dr,0);
+  const totCr = master.trialBalance.reduce((a,r)=>a+r.cr,0);
+  return `
+    ${header('Trial Balance','All ledger debit & credit')}
+    <div class="card">
+      <div class="table-wrap"><table>
+        <thead><tr><th>Ledger Head</th><th class="num">Debit (₹)</th><th class="num">Credit (₹)</th><th class="num">Net</th></tr></thead>
+        <tbody>
+          ${master.trialBalance.length ? master.trialBalance.map(r=>`<tr>
+            <td>${r.head}</td>
+            <td class="num red-txt">${r.dr?fmtN(r.dr):'-'}</td>
+            <td class="num green-txt">${r.cr?fmtN(r.cr):'-'}</td>
+            <td class="num" style="color:var(--primary);font-weight:700">${fmtN(r.cr - r.dr)}</td>
+          </tr>`).join('') : '<tr><td colspan="4"><div class="empty">Import data first</div></td></tr>'}
+          ${master.trialBalance.length ? `<tr class="total-row"><td>TOTAL</td><td class="num">${fmtN(totDr)}</td><td class="num">${fmtN(totCr)}</td><td class="num">${fmtN(totCr - totDr)}</td></tr>` : ''}
+        </tbody>
+      </table></div>
+    </div>
+  `;
+}
+
+/* -------- P&L -------- */
+function renderPL(){
+  const master = generateMasterFinancialStatements();
+  const {exp, inc, totExp, totInc, netPL} = master.pl;
+  return `
+    ${header('P&L Statement','Profit & Loss master')}
+    <div class="card">
+      <div class="grid grid-2">
+        <div>
+          <div class="section-title">💸 Expenses</div>
+          ${exp.length ? exp.map(e=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #F1F5F9;font-size:13px"><span>${e.head}</span><span class="red-txt">${fmtN(e.amt)}</span></div>`).join('') : '<div style="padding:14px;color:var(--muted)">No expenses</div>'}
+        </div>
+        <div>
+          <div class="section-title">💰 Income</div>
+          ${inc.length ? inc.map(e=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #F1F5F9;font-size:13px"><span>${e.head}</span><span class="green-txt">${fmtN(e.amt)}</span></div>`).join('') : '<div style="padding:14px;color:var(--muted)">No income</div>'}
+        </div>
+      </div>
+      <div style="margin-top:16px;padding:16px;background:var(--blue-bg);border-radius:10px">
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px;font-size:13px"><span>Total Expenses</span><span class="red-txt">${fmt(totExp)}</span></div>
+        <div style="display:flex;justify-content:space-between;margin-bottom:12px;font-size:13px"><span>Total Income</span><span class="green-txt">${fmt(totInc)}</span></div>
+        <div style="display:flex;justify-content:space-between;font-size:17px;font-weight:800;padding-top:12px;border-top:2px solid var(--primary);color:var(--navy)">
+          <span>${netPL>=0?'NET PROFIT':'NET LOSS'}</span>
+          <span class="${netPL>=0?'green-txt':'red-txt'}">${fmt(Math.abs(netPL))}</span>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+/* -------- Balance Sheet -------- */
+function renderBalanceSheet(){
+  const m = generateMasterFinancialStatements();
+  const tallied = Math.abs(m.bs.capitalPlusPL - m.bs.totAssets) < 1;
+  return `
+    ${header('Balance Sheet','Assets vs Liabilities')}
+    <div class="card">
+      <div class="grid grid-2">
+        <div>
+          <div class="section-title">🏛️ Liabilities & Capital</div>
+          <table><tbody>
+            <tr><td>Opening Capital (Cash + Bank)</td><td class="num">${fmtN(m.bs.capital)}</td></tr>
+            <tr><td>Net Profit (P&L)</td><td class="num">${fmtN(m.bs.netPL>0?m.bs.netPL:0)}</td></tr>
+            <tr><td>Loans Payable</td><td class="num">0.00</td></tr>
+            <tr class="total-row"><td>TOTAL</td><td class="num">${fmtN(m.bs.capitalPlusPL)}</td></tr>
+          </tbody></table>
+        </div>
+        <div>
+          <div class="section-title">💎 Assets</div>
+          <table><tbody>
+            <tr><td>Cash Balance</td><td class="num">${fmtN(m.bs.cashBal)}</td></tr>
+            <tr><td>Bank Balance</td><td class="num">${fmtN(m.bs.bankBal)}</td></tr>
+            <tr><td>Due (Receivables)</td><td class="num">0.00</td></tr>
+            <tr class="total-row"><td>TOTAL</td><td class="num">${fmtN(m.bs.totAssets)}</td></tr>
+          </tbody></table>
+        </div>
+      </div>
+      <div style="margin-top:16px;padding:14px;background:${tallied?'var(--green-bg)':'var(--red-bg)'};border-radius:10px;text-align:center;font-size:13px;font-weight:700;color:${tallied?'var(--green)':'var(--red)'}">
+        ${tallied ? '✅ Balance Sheet Tallied' : '⚠️ Difference: ' + fmt(Math.abs(m.bs.capitalPlusPL - m.bs.totAssets))}
+      </div>
+    </div>
+  `;
+}
+
+/* -------- Filter Ledgers -------- */
+function renderFilterLedgers(){
+  const {results, totRec, totPay} = filterLedgerTransactions(state._filterLedger || 'ALL', state._filterFrom || '', state._filterTo || '');
+  return `
+    ${header('Filter Ledgers','Query by ledger and date')}
+    <div class="card" style="margin-bottom:16px">
+      <div class="filter-bar">
+        <div class="field"><label>Ledger</label>
+          <select id="flLedger">${getLedgerList().map(l=>`<option ${l===(state._filterLedger||'ALL')?'selected':''}>${l}</option>`).join('')}</select></div>
+        <div class="field"><label>From</label><input type="date" id="flFrom" value="${state._filterFrom||''}"></div>
+        <div class="field"><label>To</label><input type="date" id="flTo" value="${state._filterTo||''}"></div>
+        <button class="btn btn-primary" id="flApply">Apply</button>
+        <button class="btn" id="flClear">Clear</button>
+      </div>
+    </div>
+    <div class="grid grid-4" style="margin-bottom:16px">
+      <div class="stat"><div class="stat-label">Transactions</div><div class="stat-val">${results.length}</div></div>
+      <div class="stat"><div class="stat-label">Total Received</div><div class="stat-val green">${fmt(totRec)}</div></div>
+      <div class="stat"><div class="stat-label">Total Payment</div><div class="stat-val red">${fmt(totPay)}</div></div>
+      <div class="stat"><div class="stat-label">Net</div><div class="stat-val">${fmt(totRec-totPay)}</div></div>
+    </div>
+    <div class="card">
+      <div class="table-wrap"><table>
+        <thead><tr><th>Date</th><th>Type</th><th>Particular</th><th class="num">In</th><th class="num">Out</th><th>Ledger</th><th>Mode</th><th>Account</th></tr></thead>
+        <tbody>
+          ${results.length ? results.slice(0, 500).map(r=>`<tr>
+            <td>${new Date(r.date).toLocaleDateString('en-IN')}</td>
+            <td><span class="chip ${r.type==='Receipt'?'chip-receipt':'chip-payment'}">${r.type}</span></td>
+            <td>${r.particular||'-'}</td>
+            <td class="num green-txt">${r.recAmt?fmtN(r.recAmt):'-'}</td>
+            <td class="num red-txt">${r.payAmt?fmtN(r.payAmt):'-'}</td>
+            <td>${r.ledger||'-'}</td><td>${r.mode||'-'}</td><td>${r.acc||'-'}</td>
+          </tr>`).join('') : '<tr><td colspan="8"><div class="empty">No matching transactions</div></td></tr>'}
+          ${results.length ? `<tr class="total-row"><td colspan="3">TOTAL (${results.length})</td><td class="num">${fmtN(totRec)}</td><td class="num">${fmtN(totPay)}</td><td colspan="3"></td></tr>`:''}
+        </tbody>
+      </table></div>
+    </div>
+  `;
+}
+
+/* -------- Settings -------- */
+function renderSettings(){
+  return `
+    ${header('Settings & Imports','Upload data & configure preferences')}
+    
+    <div class="card" style="margin-bottom:16px; border-color:var(--primary);">
+      <div class="section-title" style="color:var(--primary)">📊 Google Sheets Sync</div>
+      <p style="font-size:12px; color:var(--muted); margin-bottom:12px;">Your Google Sheets URL is connected. Click the button below to push all your current data to Google Sheets.</p>
+      <button class="btn btn-green" onclick="syncToGoogleSheets()">⬆️ Sync to Google Sheets</button>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <div class="section-title">💵 Set Cash Denomination Tally</div>
+      <div class="grid grid-2" style="gap:12px; margin-bottom:16px">
+        ${[500,200,100,50,20,10,5,2,1].map(v=>`
+          <div class="field" style="margin-bottom:0">
+            <label>₹${v} Notes Count</label>
+            <input type="number" id="setDenom_${v}" value="${state.denominations[v]||0}" step="1" min="0">
+          </div>
+        `).join('')}
+      </div>
+      <button class="btn btn-primary" id="saveDenomTally">Save Denomination Tally</button>
+    </div>
+
+    <div class="grid grid-2" style="margin-bottom:16px">
+      <div class="card">
+        <div class="section-title">📥 Import Cash Book</div>
+        <label class="upload-zone" for="impCash">
+          <div class="up-icon">💵</div>
+          <div class="up-text">Click to upload Cash Book CSV</div>
+          <div class="up-sub">Columns: Date, Type, Particular, Received, Payment, Ledger, Mode</div>
+          <input type="file" id="impCash" accept=".csv">
+        </label>
+        <div class="upload-info">Current: <strong>${state.cashBook.length}</strong> records</div>
+      </div>
+      <div class="card">
+        <div class="section-title">📥 Import Bank Book</div>
+        <label class="upload-zone" for="impBank">
+          <div class="up-icon">🏦</div>
+          <div class="up-text">Click to upload Bank Book CSV</div>
+          <div class="up-sub">Columns: Date, Type, Particular, Received, Payment, Ledger, Mode, Account</div>
+          <input type="file" id="impBank" accept=".csv">
+        </label>
+        <div class="upload-info">Current: <strong>${state.bankBook.length}</strong> records</div>
+      </div>
+    </div>
+    
+    <div class="card" style="margin-bottom:16px">
+      <div class="section-title">💰 Opening Balances</div>
+      <div class="field-row">
+        <div class="field"><label>Opening Cash (₹)</label><input type="number" id="setCash" value="${state.opening.cash}" step="0.01"></div>
+        <div class="field"><label>Opening Bank (₹)</label><input type="number" id="setBank" value="${state.opening.bank}" step="0.01"></div>
+      </div>
+      <button class="btn btn-primary" id="saveOpening">Save Opening Balances</button>
+    </div>
+    
+    <div class="card">
+      <div class="section-title" style="color:var(--red)">⚠️ Danger Zone</div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button class="btn btn-red" id="clearCash">Clear Cash Book (${state.cashBook.length})</button>
+        <button class="btn btn-red" id="clearBank">Clear Bank Book (${state.bankBook.length})</button>
+        <button class="btn btn-red" id="clearRoutes">Clear All Routes</button>
+        <button class="btn btn-red" id="clearAll">Clear Everything</button>
+      </div>
+    </div>
+  `;
+}
+
+/* ===================== EVENT HANDLERS ===================== */
+function attachHandlers(){
+  $$('.nav-item').forEach(n => { 
+    if(n.dataset.page) {
+      n.onclick = () => { 
+        goTo(n.dataset.page); 
+        document.querySelector('.sidebar').classList.remove('open'); 
+      };
+    }
+  });
+
+  const logoutBtn = document.getElementById('logoutBtn');
+  if(logoutBtn) logoutBtn.onclick = handleLogout;
+  
+  const txMode = $('#txMode');
+  if(txMode){
+    txMode.onchange = () => { 
+      $('#accWrap').classList.toggle('hidden', txMode.value !== 'Bank'); 
+      if(txMode.value === 'Cash') {
+        $('#cashDenomSection').classList.remove('hidden');
+        window.onTxAmountChange();
+      } else {
+        $('#cashDenomSection').classList.add('hidden');
+      }
+    };
+    
+    $('#btnSubmitTx').onclick = () => {
+      let denom = null;
+      if ($('#txMode').value === 'Cash') {
+        denom = {};
+        [500,200,100,50,20,10,5,2,1].forEach(v => {
+          denom[v] = Number($(`#denom_${v}`).value) || 0;
         });
-    </script>
+      }
+      submitTransaction({
+        type: $('#txType').value, ledger: $('#txLedger').value, mode: $('#txMode').value,
+        accName: $('#txAcc')?.value, amount: $('#txAmount').value, desc: $('#txDesc').value,
+        date: $('#txDate').value, denom: denom
+      });
+    };
+  }
+  
+  if(state.currentPage === 'route01' || state.currentPage === 'route02'){
+    const isR1 = state.currentPage === 'route01';
+    const fromKey = isR1 ? '_route01From' : '_route02From';
+    const toKey = isR1 ? '_route01To' : '_route02To';
 
+    $('#btnRouteFilter').onclick = () => {
+      state[fromKey] = $('#routeFrom').value;
+      state[toKey] = $('#routeTo').value;
+      render();
+    };
+
+    $('#btnRouteClear').onclick = () => {
+      if(confirm('Clear all data for this route?')) {
+        if(isR1) state.route01 = [];
+        else state.route02 = [];
+        state[fromKey] = '';
+        state[toKey] = '';
+        save();
+        render();
+        toast('Route data cleared', 'success');
+      }
+    };
+
+    const routeUpload = $('#routeUpload');
+    if(routeUpload){
+      routeUpload.onchange = e => {
+        const file = e.target.files[0];
+        if(!file) return;
+        const reader = new FileReader();
+        reader.onload = ev => {
+          const count = importRouteCSV(ev.target.result, isR1 ? 'Route 01' : 'Route 02');
+          toast(`✅ Imported ${count} entries to ${isR1 ? 'Route 01' : 'Route 02'}`);
+          render();
+        };
+        reader.readAsText(file);
+      };
+    }
+
+    const addRouteBtn = $('#addRouteBtn');
+    if(addRouteBtn){
+      addRouteBtn.onclick = () => {
+        const routeData = isR1 ? state.route01 : state.route02;
+        const fromVal = state[fromKey] || '';
+        const toVal = state[toKey] || '';
+        
+        const filteredCash = routeData.filter(r => {
+            const d = parseDateSafe(r.date);
+            if(!d) return false;
+            if (fromVal && d < new Date(fromVal + 'T00:00:00')) return false;
+            if (toVal && d > new Date(toVal + 'T23:59:59')) return false;
+            const mode = (r.mop || r.type || '').toLowerCase();
+            return mode === 'cash';
+        });
+
+        const total = filteredCash.reduce((a, r) => a + (Number(r.amount)||0), 0);
+        if(total === 0){
+           toast('No cash entries found in current filter', 'error');
+           return;
+        }
+        openRouteDenomModal(isR1 ? 'Route 01' : 'Route 02', filteredCash, total);
+      };
+    }
+  }
+  
+  if($('#drDate')){
+    $('#drDate').onchange = e => { state._dailyDate = e.target.value; render(); };
+    $('#drLoad').onclick = () => { state._dailyDate = $('#drDate').value; render(); };
+  }
+  
+  if($('#mrMonth')){
+    $('#mrMonth').onchange = e => { state._monthlyMonth = e.target.value; render(); };
+    $('#mrLoad').onclick = () => { state._monthlyMonth = $('#mrMonth').value; render(); };
+  }
+
+  if($('#btnBookFilter')){
+    $('#btnBookFilter').onclick = () => {
+      const kind = $('#btnBookFilter').dataset.kind;
+      const from = $('#bookFrom').value;
+      const to = $('#bookTo').value;
+      
+      if(kind === 'Cash') {
+        state._cashFrom = from;
+        state._cashTo = to;
+      } else {
+        const acc = $('#bookAcc').value;
+        state._bankFrom = from;
+        state._bankTo = to;
+        state._bankAcc = acc;
+      }
+      render();
+    };
+    $('#btnBookClear').onclick = () => {
+      const kind = $('#btnBookClear').dataset.kind;
+      if(kind === 'Cash') {
+        state._cashFrom = '';
+        state._cashTo = '';
+      } else {
+        state._bankFrom = '';
+        state._bankTo = '';
+        state._bankAcc = 'ALL';
+      }
+      render();
+    };
+  }
+  
+  if($('#flApply')){
+    $('#flApply').onclick = () => { state._filterLedger = $('#flLedger').value; state._filterFrom = $('#flFrom').value; state._filterTo = $('#flTo').value; render(); };
+    $('#flClear').onclick = () => { state._filterLedger = 'ALL'; state._filterFrom = ''; state._filterTo = ''; render(); };
+  }
+  
+  if($('#saveDenomTally')){
+    $('#saveDenomTally').onclick = () => {
+      [500,200,100,50,20,10,5,2,1].forEach(v => {
+        state.denominations[v] = Number($(`#setDenom_${v}`).value) || 0;
+      });
+      save(); 
+      toast('✅ Cash Denomination Tally updated!'); 
+      render();
+    };
+  }
+
+  if($('#saveOpening')){
+    $('#saveOpening').onclick = () => {
+      state.opening.cash = Number($('#setCash').value) || 0;
+      state.opening.bank = Number($('#setBank').value) || 0;
+      save(); toast('Opening balances saved!');
+    };
+    $('#impCash').onchange = e => {
+      const file = e.target.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const count = importCashCSV(ev.target.result);
+        toast(`✅ Imported ${count} cash entries`);
+        render();
+      };
+      reader.readAsText(file);
+    };
+    $('#impBank').onchange = e => {
+      const file = e.target.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        const count = importBankCSV(ev.target.result);
+        toast(`✅ Imported ${count} bank entries`);
+        render();
+      };
+      reader.readAsText(file);
+    };
+    $('#clearCash').onclick = () => { if(confirm('Clear all Cash Book?')){ state.cashBook = []; save(); render(); toast('Cash Book cleared'); } };
+    $('#clearBank').onclick = () => { if(confirm('Clear all Bank Book?')){ state.bankBook = []; state.bankOpenings = {}; save(); render(); toast('Bank Book cleared'); } };
+    $('#clearRoutes').onclick = () => { if(confirm('Clear both routes?')){ state.route01 = []; state.route02 = []; save(); render(); toast('Routes cleared'); } };
+    $('#clearAll').onclick = () => { if(confirm('Clear ALL data? This cannot be undone!')){ state.cashBook = []; state.bankBook = []; state.bankOpenings = {}; state.route01 = []; state.route02 = []; state.denominations = {500:0,200:0,100:0,50:0,20:0,10:0,5:0,2:0,1:0}; save(); render(); toast('All data cleared'); } };
+  }
+}
+
+/* ===================== GOOGLE SHEETS SYNC ===================== */
+window.syncToGoogleSheets = async function() {
+  if (!state.sheetsUrl) {
+    toast('❌ Google Sheets URL not configured.', 'error');
+    return;
+  }
+  
+  toast('⏳ Syncing data to Google Sheets...', 'success');
+  
+  const payload = {
+    cashBook: state.cashBook,
+    bankBook: state.bankBook,
+    route01: state.route01,
+    route02: state.route02,
+    denominations: state.denominations,
+    opening: state.opening
+  };
+
+  try {
+    const response = await fetch(state.sheetsUrl, {
+      method: 'POST',
+      mode: 'no-cors', // Important for GAS Web App
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    
+    setTimeout(() => {
+      toast('✅ Data Sent to Google Sheets! Check your sheet.', 'success');
+    }, 1500);
+  } catch (e) {
+    console.error(e);
+    toast('❌ Sync failed: ' + e.message, 'error');
+  }
+};
+
+/* ===================== EXPORT LOGIC ===================== */
+window.exportDailyReportCSV = function() {
+  const date = state._dailyDate || todayStr();
+  const target = new Date(date);
+  target.setHours(23,59,59,999);
+  
+  let closeCash = state.opening.cash;
+  for(const r of state.cashBook){ if(new Date(r.date) <= target) closeCash = r.balance; }
+  let closeBank = state.opening.bank;
+  for(const r of state.bankBook){ if(new Date(r.date) <= target) closeBank = r.balance; }
+  
+  const bankAccs = ['Current AC', 'Ashok sir AC KVB', 'Mani SBI', 'Dhanapal sir Axis AC', 'Mani KVB', 'Ashok sir AC Gpay', 'Dhanapal sir AC'];
+  const accBalances = {};
+  
+  if (state.bankOpenings) {
+      Object.keys(state.bankOpenings).forEach(acc => {
+          accBalances[acc] = state.bankOpenings[acc];
+      });
+  }
+  bankAccs.forEach(acc => {
+      if (accBalances[acc] === undefined) accBalances[acc] = 0;
+  });
+
+  state.bankBook.forEach(r => {
+    if(new Date(r.date) <= target){
+      const acc = r.accName || 'Mani SBI';
+      if(accBalances[acc] === undefined) accBalances[acc] = 0;
+      accBalances[acc] += (Number(r.recAmt)||0) - (Number(r.payAmt)||0);
+    }
+  });
+
+  const getRouteTotal = (routeData) => {
+    return routeData.filter(r => {
+      if(!r.date) return false;
+      const d = parseDateSafe(r.date);
+      return d && sameDay(d, target);
+    }).reduce((a, r) => a + (Number(r.amount)||0), 0);
+  };
+  const r1Total = getRouteTotal(state.route01);
+  const r2Total = getRouteTotal(state.route02);
+
+  const denomTotal = Object.entries(state.denominations).reduce((a,[v,c]) => a + Number(v)*Number(c), 0);
+
+  let csv = '\uFEFF';
+  csv += `TRY Accounting - Daily Report (${date})\n\n`;
+  
+  csv += `Summary,Amount\n`;
+  csv += `Cash Closing Balance,${fmtN(closeCash)}\n`;
+  csv += `Bank Closing Balance,${fmtN(closeBank)}\n`;
+  
+  csv += `\nBank Account Breakdown,Balance\n`;
+  Object.entries(accBalances).forEach(([acc, bal]) => {
+    csv += `"${acc}",${fmtN(bal)}\n`;
+  });
+
+  csv += `\nRoute Collections,Total\n`;
+  csv += `"Route 01",${fmtN(r1Total)}\n`;
+  csv += `"Route 02",${fmtN(r2Total)}\n`;
+
+  csv += `\nDenomination Tally,Count,Amount\n`;
+  [500,200,100,50,20,10,5,2,1].forEach(v => {
+    const c = state.denominations[v] || 0;
+    csv += `"₹${v}",${c},${fmtN(v*c)}\n`;
+  });
+  csv += `"Total",,${fmtN(denomTotal)}\n`;
+
+  csv += `\nTransactions\n`;
+  csv += `Date,Type,Particular,Received,Payment,Ledger,Mode,Account,Balance\n`;
+  
+  const txs = [];
+  state.cashBook.forEach(r => { if(sameDay(new Date(r.date), target)) txs.push({...r, acc:'Cash'}); });
+  state.bankBook.forEach(r => { if(sameDay(new Date(r.date), target)) txs.push({...r, acc: r.accName||'Bank'}); });
+  txs.sort((a,b)=>new Date(a.date)-new Date(b.date));
+  
+  txs.forEach(r => {
+    const d = new Date(r.date).toLocaleDateString('en-IN');
+    const rec = r.recAmt ? fmtN(r.recAmt) : '0';
+    const pay = r.payAmt ? fmtN(r.payAmt) : '0';
+    csv += `"${d}","${r.type}","${(r.particular||'').replace(/"/g, '""')}",${rec},${pay},"${r.ledger||''}","${r.mode}","${r.acc}",${fmtN(r.balance)}\n`;
+  });
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.setAttribute("href", url);
+  link.setAttribute("download", `Daily_Report_${date}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  toast('✅ Excel (CSV) Downloaded!');
+};
+
+/* ===================== INLINE DENOMINATION LOGIC ===================== */
+window.onTxAmountChange = function() {
+    const mode = $('#txMode').value;
+    const amount = Number($('#txAmount').value) || 0;
+    const section = $('#cashDenomSection');
+    
+    if (mode === 'Cash' && amount > 0) {
+        section.classList.remove('hidden');
+        window.autoCalcDenom(amount);
+    } else if (mode === 'Cash') {
+        section.classList.remove('hidden');
+    } else {
+        section.classList.add('hidden');
+    }
+};
+
+window.autoCalcDenom = function(amount) {
+    let remaining = amount;
+    const vals = [500, 200, 100, 50, 20, 10, 5, 2, 1];
+    vals.forEach(v => {
+        const count = Math.floor(remaining / v);
+        $(`#denom_${v}`).value = count > 0 ? count : '';
+        remaining %= v;
+    });
+    window.updateInlineDenomTotal();
+};
+
+window.updateInlineDenomTotal = function() {
+    let total = 0;
+    const vals = [500, 200, 100, 50, 20, 10, 5, 2, 1];
+    vals.forEach(v => {
+        const count = Number($(`#denom_${v}`).value) || 0;
+        const amt = v * count;
+        total += amt;
+        const amtEl = $(`#denomAmt_${v}`);
+        if(amtEl) amtEl.textContent = fmt(amt);
+    });
+    const totEl = $('#inlineDenomTotal');
+    const target = Number($('#txAmount').value) || 0;
+    if(totEl) {
+        totEl.textContent = fmt(total);
+        totEl.style.color = Math.abs(total - target) < 0.01 ? 'var(--green)' : 'var(--red)';
+    }
+};
+
+/* ===================== ROUTE DENOMINATION MODAL ===================== */
+function openRouteDenomModal(routeName, cashEntries, cashTotal){
+  window.__routeName = routeName;
+  window.__routeCashTotal = cashTotal;
+  window.__routeCashEntries = cashEntries;
+  
+  openModal(`
+    <h3>Cash Denomination Verification</h3>
+    <p class="sub">${routeName} — Target: <strong style="color:var(--primary)">${fmt(cashTotal)}</strong> (${cashEntries.length} cash entries)</p>
+    <div id="denomRows">
+      ${[500,200,100,50,20,10,5,2,1].map(v=>`
+        <div class="denom-row">
+          <div class="denom-val">₹${v}</div>
+          <input type="number" min="0" data-denom="${v}" placeholder="0" oninput="updateRouteDenom()">
+          <div class="denom-amt" data-amt="${v}">₹0.00</div>
+        </div>
+      `).join('')}
+    </div>
+    <div class="denom-total"><span>Entered Total:</span><span id="denomTotal">₹0.00</span></div>
+    <div id="denomMatchMsg" class="denom-status" style="background:var(--orange-bg);color:var(--orange)">⚠️ Enter denominations totaling ${fmt(cashTotal)}</div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-green hidden" id="denomSubmitBtn">✓ Verify & Post to Cash Book</button>
+    </div>
+  `);
+  
+  setTimeout(() => {
+    $('#denomSubmitBtn').onclick = () => postRouteCollection(routeName);
+  }, 50);
+}
+
+function updateRouteDenom(){
+  let total = 0;
+  document.querySelectorAll('[data-denom]').forEach(inp => {
+    const v = Number(inp.dataset.denom);
+    const c = Number(inp.value) || 0;
+    const amt = v * c;
+    total += amt;
+    const amtEl = document.querySelector(`[data-amt="${v}"]`);
+    if(amtEl) amtEl.textContent = fmt(amt);
+  });
+  const totEl = document.getElementById('denomTotal');
+  if(totEl) totEl.textContent = fmt(total);
+  
+  const target = window.__routeCashTotal;
+  const match = Math.abs(total - target) < 0.01;
+  const msgEl = document.getElementById('denomMatchMsg');
+  const btn = document.getElementById('denomSubmitBtn');
+  
+  if(match){
+    if(msgEl){
+      msgEl.textContent = '✓ Matched! Ready to post';
+      msgEl.style.background = 'var(--green-bg)';
+      msgEl.style.color = 'var(--green)';
+    }
+    if(btn) btn.classList.remove('hidden');
+  } else {
+    if(total === 0){
+      if(msgEl){
+        msgEl.textContent = `⚠️ Enter denominations totaling ${fmt(target)}`;
+        msgEl.style.background = 'var(--orange-bg)';
+        msgEl.style.color = 'var(--orange)';
+      }
+    } else {
+      const diff = Math.abs(target - total);
+      if(msgEl){
+        msgEl.textContent = `❌ Mismatch — Difference: ${fmt(diff)}`;
+        msgEl.style.background = 'var(--red-bg)';
+        msgEl.style.color = 'var(--red)';
+      }
+    }
+    if(btn) btn.classList.add('hidden');
+  }
+}
+
+function postRouteCollection(routeName){
+  const denoms = {};
+  document.querySelectorAll('[data-denom]').forEach(inp => {
+    denoms[inp.dataset.denom] = Number(inp.value) || 0;
+  });
+  
+  const cashEntries = window.__routeCashEntries || [];
+  const d = new Date();
+  
+  cashEntries.forEach(r => {
+    const amt = Number(r.amount);
+    if(amt <= 0) return;
+    const lastBal = state.cashBook.length ? state.cashBook[state.cashBook.length - 1].balance : state.opening.cash;
+    state.cashBook.push({
+      date: d.toISOString(), 
+      type: 'Receipt', 
+      particular: r.name || 'Route Collection',
+      recAmt: amt, 
+      payAmt: 0, 
+      ledger: 'Due Amount', 
+      mode: 'Cash', 
+      balance: lastBal + amt
+    });
+  });
+  
+  for(const v of [500,200,100,50,20,10,5,2,1]){
+    state.denominations[v] = (state.denominations[v] || 0) + (Number(denoms[v]) || 0);
+  }
+  
+  save();
+  closeModal();
+  toast(`✅ ${cashEntries.length} route collections posted to Cash Book!`);
+  render();
+}
+
+/* ===================== INIT ===================== */
+function init(){
+  if(!localStorage.getItem('try_initialized_v12')){
+    if(state.opening.cash === 0) state.opening.cash = 783.00;
+    if(state.opening.bank === 0) state.opening.bank = 151853.27;
+    save();
+    localStorage.setItem('try_initialized_v12', 'true');
+  }
+  render();
+}
+</script>
 </body>
 </html>
