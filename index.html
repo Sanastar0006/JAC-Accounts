@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MNR Accounting System</title>
+<title>TRICHY Accounting System</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -164,7 +164,7 @@ tbody tr.total-row{background:var(--blue-bg);font-weight:700;color:var(--navy)}
 <div id="loginScreen" class="login-overlay hidden">
   <div class="login-card">
     <div class="login-logo">🏦</div>
-    <div class="login-title">MNR Accounting</div>
+    <div class="login-title">TRICHY Accounting</div>
     <div class="login-sub">Tiruchirappalli Branch - Secure Login</div>
     
     <div class="field" style="text-align:left">
@@ -198,7 +198,7 @@ tbody tr.total-row{background:var(--blue-bg);font-weight:700;color:var(--navy)}
     <div class="logo">
       <div class="logo-icon">🏦</div>
       <div class="logo-txt">
-        <h1>MNR Accounting</h1>
+        <h1>TRICHY Accounting</h1>
         <p>Tiruchirappalli Branch</p>
       </div>
     </div>
@@ -1060,7 +1060,7 @@ function renderDailyReport(){
     ${header('Daily Report','Date-wise transactions & closing balances', true)}
     
     <div class="print-only" style="text-align:center;margin-bottom:20px">
-      <h2>MNR Accounting - Daily Report</h2>
+      <h2>TRICHY Accounting - Daily Report</h2>
       <p>Date: ${new Date(date).toLocaleDateString('en-IN')}</p>
       <hr style="margin:10px 0">
     </div>
@@ -1741,7 +1741,7 @@ window.exportDailyReportCSV = function() {
   const denomTotal = Object.entries(state.denominations).reduce((a,[v,c]) => a + Number(v)*Number(c), 0);
 
   let csv = '\uFEFF';
-  csv += `MNR Accounting - Daily Report (${date})\n\n`;
+  csv += `TRICHY Accounting - Daily Report (${date})\n\n`;
   
   csv += `Summary,Amount\n`;
   csv += `Cash Closing Balance,${fmtN(closeCash)}\n`;
